@@ -1,4 +1,4 @@
-import { Contact } from '../utils/graph';
+import { Contact } from '../types';
 import { UserConfig } from '../constants/config';
 
 export const formatNameWithConfig = (identity: Contact['identity'], config: UserConfig) => {

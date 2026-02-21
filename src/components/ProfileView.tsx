@@ -1,20 +1,55 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
-import { ChevronLeft, Phone, Calendar, MessageSquare } from 'lucide-react-native';
+import { ChevronLeft, Phone, Calendar, MessageSquare, Users } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { CENTER_ID } from '../constants/config';
-import { ContactWithDistance } from '../types';
+import { ContactWithDistance, Group, Contact } from '../types';
 import { getPhoneNumber, formatDate, getInitials } from '../utils/format';
-import { Contact } from '../utils/graph';
 
 interface ProfileViewProps {
   contact: ContactWithDistance;
   onClose: () => void;
   contactMap: Map<string, string>;
   formatName: (id: Contact['identity']) => string;
+  groups: Group[];
 }
 
-export const ProfileView = ({ contact, onClose, contactMap, formatName }: ProfileViewProps) => {
+const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[], contactGroupIds: string[], level?: number }) => {
+  const isMatch = (group: Group): boolean => {
+    if (contactGroupIds.includes(group.identifier)) return true;
+    return !!group.subgroups?.some(isMatch);
+  };
+
+  return (
+    <View style={{ marginLeft: level * 16 }}>
+      {groups.map((group) => {
+        const isActive = isMatch(group);
+
+        if (!isActive) return null;
+
+        return (
+          <View key={group.identifier} style={styles.groupItem}>
+            <View style={styles.groupHeader}>
+              <View style={styles.bullet} />
+              <Text style={styles.groupName}>
+                {group.name}
+              </Text>
+            </View>
+            {group.subgroups && (
+              <NestedGroups 
+                groups={group.subgroups} 
+                contactGroupIds={contactGroupIds} 
+                level={level + 1} 
+              />
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+export const ProfileView = ({ contact, onClose, contactMap, formatName, groups }: ProfileViewProps) => {
   const hasPhone = contact.phones && contact.phones?.length > 0;
 
   const handleCall = () => {
@@ -49,7 +84,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName }: Profil
         <View style={styles.profileHeader}>
           <View style={[styles.largeAvatar, { backgroundColor: contact.identity.gender === 'male' ? '#eff6ff' : '#fdf2f8' }]}>
             <Text style={[styles.largeAvatarText, { color: contact.identity.gender === 'male' ? '#1d4ed8' : '#be185d' }]}>
-              {getInitials(contact.identity.first_name, contact.identity.last_name)}
+              {getInitials(contact.identity.first_name!, contact.identity.last_name!)}
             </Text>
           </View>
           <Text style={styles.profileName}>{formatName(contact.identity)}</Text>
@@ -87,10 +122,10 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName }: Profil
 
         {/* Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Info</Text>
+          <Text style={styles.sectionTitle}>Contact Informations</Text>
           
           {!hasPhone && !contact.identity.birth_date && (
-            <Text style={styles.infoValue}>No contact info available</Text>
+            <Text style={styles.infoValue}>No contact info available.</Text>
           )}
 
           {hasPhone && (
@@ -119,6 +154,14 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName }: Profil
              </View>
           )}
         </View>
+
+        {/* Groups */}
+        {contact.groups && contact.groups.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Groups and Subgroups</Text>
+            <NestedGroups groups={groups} contactGroupIds={contact.groups} />
+          </View>
+        )}
 
         {/* Relationship Path */}
         <View style={styles.section}>
@@ -278,6 +321,25 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: THEME.text,
+  },
+  groupItem: {
+    marginVertical: 0,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.primary,
+    marginRight: 10,
+  },
+  groupName: {
+    fontSize: 15,
+    color: THEME.text
   },
   pathContainer: {
     marginLeft: 8,

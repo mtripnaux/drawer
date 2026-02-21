@@ -9,10 +9,14 @@ import {
   TouchableOpacity, 
   SafeAreaView,
   Platform,
-  BackHandler
+  BackHandler,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent
 } from 'react-native';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Users, ArrowUpDown, Settings } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useContacts } from './src/hooks/useContacts';
 import { SettingsView } from './src/components/SettingsView';
@@ -21,18 +25,42 @@ import { ContactItem } from './src/components/ContactItem';
 import { formatNameWithConfig } from './src/utils/format';
 import { THEME } from './src/constants/theme';
 import { defaultUserConfig, UserConfig, CENTER_ID } from './src/constants/config';
-import { ContactWithDistance } from './src/types';
-import { Contact } from './src/utils/graph';
+import { ContactWithDistance, Group } from './src/types';
+import { Contact } from './src/types/index';
 
 export default function App() {
   const [config, setConfig] = useState<UserConfig>(defaultUserConfig);
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Family' | 'Friends'>('All');
+  const [activeTab, setActiveTab] = useState<string>('All');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedContact, setSelectedContact] = useState<ContactWithDistance | null>(null);
 
-  const { contacts, loading } = useContacts();
+  // Scroll tracking for tabs
+  const [scrollX, setScrollX] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
+  const [viewWidth, setViewWidth] = useState(0);
+
+  const { contacts, groups, loading } = useContacts();
+
+  const tabs = useMemo(() => {
+    const defaultTabs = [
+      { id: 'All', name: 'All' },
+      { id: 'Friends', name: 'Friends' },
+      { id: 'Family', name: 'Family' }
+    ];
+
+    const flattenGroups = (gs: Group[]): { id: string; name: string }[] => {
+      let res: { id: string; name: string }[] = [];
+      gs.forEach(g => {
+        res.push({ id: g.identifier, name: g.name });
+        if (g.subgroups) res = res.concat(flattenGroups(g.subgroups));
+      });
+      return res;
+    };
+
+    return [...defaultTabs, ...flattenGroups(groups)];
+  }, [groups]);
 
   useEffect(() => {
     const backAction = () => {
@@ -83,7 +111,6 @@ export default function App() {
 
     const coreFamilyTypes = ['Sibling', 'Parent', 'Child', 'Half-Sibling'];
 
-
     // Filter by tab
     if (activeTab === 'Family') {
       result = result.filter(c => {
@@ -99,7 +126,7 @@ export default function App() {
           }
           
           if (rel === 'Spouse' && isLast) {
-            continue; // Spouse allowed but only at the end
+            continue; 
           }
           
           return false;
@@ -115,6 +142,36 @@ export default function App() {
         const allowedFriendsTypes = ['Friend', 'Partner', 'Spouse'];
         return c.relations.every(rel => allowedFriendsTypes.includes(rel));
       });
+    } else if (activeTab !== 'All') {
+      // Group filter
+      const getRelevantGroupIds = (id: string, allGroups: Group[]): string[] => {
+        const findGroup = (gs: Group[]): Group | undefined => {
+          for (const g of gs) {
+            if (g.identifier === id) return g;
+            if (g.subgroups) {
+              const found = findGroup(g.subgroups);
+              if (found) return found;
+            }
+          }
+          return undefined;
+        };
+
+        const target = findGroup(allGroups);
+        if (!target) return [id];
+
+        const ids = [target.identifier];
+        const collectSubIds = (gs: Group[]) => {
+          gs.forEach(sub => {
+            ids.push(sub.identifier);
+            if (sub.subgroups) collectSubIds(sub.subgroups);
+          });
+        };
+        if (target.subgroups) collectSubIds(target.subgroups);
+        return ids;
+      };
+
+      const groupIds = getRelevantGroupIds(activeTab, groups);
+      result = result.filter(c => c.groups?.some(gid => groupIds.includes(gid)));
     }
 
     // Sort
@@ -155,7 +212,13 @@ export default function App() {
   if (selectedContact) {
     return (
       <SafeAreaView style={styles.safeArea}>
-         <ProfileView contact={selectedContact} onClose={() => setSelectedContact(null)} contactMap={contactMap} formatName={formatName} />
+         <ProfileView 
+            contact={selectedContact} 
+            onClose={() => setSelectedContact(null)} 
+            contactMap={contactMap} 
+            formatName={formatName} 
+            groups={groups}
+          />
          <StatusBar style="dark" />
       </SafeAreaView>
     );
@@ -200,18 +263,51 @@ export default function App() {
         </View>
 
         {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          {(['All', 'Family', 'Friends'] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View 
+          style={styles.tabsWrapper}
+          onLayout={(e) => setViewWidth(e.nativeEvent.layout.width)}
+        >
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabsScrollContent}
+            bounces={true}
+            scrollEventThrottle={16}
+            onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)}
+            onContentSizeChange={(w) => setContentWidth(w)}
+          >
+            {tabs.map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+                onPress={() => setActiveTab(tab.id)}
+              >
+                <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>
+                  {tab.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          {true && (
+            <LinearGradient
+              colors={[THEME.background, 'transparent']}
+              locations={[0.3, 0.43]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.fadeLeft}
+              pointerEvents="none"
+            />
+          )}
+          {true && (
+            <LinearGradient
+              colors={['transparent', THEME.background]}
+              locations={[0.56, 0.69]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.fadeRight}
+              pointerEvents="none"
+            />
+          )}
         </View>
 
         {/* List */}
@@ -313,15 +409,35 @@ const styles = StyleSheet.create({
       default: {},
     }) as any,
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
+  tabsWrapper: {
+    position: 'relative',
+    height: 44,
     marginBottom: 10,
+  },
+  tabsScrollContent: {
+    paddingHorizontal: 20,
     gap: 8,
+    alignItems: 'center',
+  },
+  fadeLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 50,
+    zIndex: 1,
+  },
+  fadeRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 50,
+    zIndex: 1,
   },
   tab: {
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderRadius: 20,
     backgroundColor: THEME.surface,
     borderWidth: 1,

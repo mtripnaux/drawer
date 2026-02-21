@@ -1,46 +1,4 @@
-export type Relation = 
-  | 'Sibling' 
-  | 'Spouse' 
-  | 'Partner' 
-  | 'Friend' 
-  | 'Parent' 
-  | 'Child' 
-  | 'Boss' 
-  | 'Employee' 
-  | 'Colleague'
-  | 'Half-Sibling'
-  | 'Ex';
-
-export interface Link {
-  target: string;
-  relation: Relation;
-}
-
-export interface Contact {
-  identifier: string;
-  identity: {
-    first_name: string;
-    last_name: string;
-    middle_name?: string | null;
-    title?: string | null;
-    gender: 'male' | 'female' | string;
-    birth_date?: { 
-      year?: number | null; 
-      month?: number | null; 
-      day?: number | null;
-      hour?: number | null;
-      minute?: number | null;
-      second?: number | null;
-    } | null;
-    is_alive?: boolean;
-    birth_first_name?: string | null;
-    birth_middle_name?: string | null;
-    birth_last_name?: string | null;
-    // Add other fields if necessary
-  };
-  phones?: ({ number: number | string; country_code?: number; label?: string } | string)[] | null;
-  links: Link[] | null;
-}
+import { Contact, Relation, Link } from '../types';
 
 export interface GraphEdge {
   target: string;
