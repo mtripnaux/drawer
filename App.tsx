@@ -81,32 +81,27 @@ export default function App() {
       );
     }
 
+    const coreFamilyTypes = ['Sibling', 'Parent', 'Child', 'Half-Sibling'];
+
+
     // Filter by tab
     if (activeTab === 'Family') {
       result = result.filter(c => {
         if (c.identifier === CENTER_ID) return true;
         if (c.distance === Infinity || c.relations.length === 0) return false;
         
-        // Rules for family path:
-        // 1. Core family (Sibling, Half-Sibling, Parent, Child) can be anywhere.
-        // 2. Spouse can only be at the very last position.
-        // 3. Partner, Ex, Friend, etc. are NOT allowed.
-        
-        const coreFamilyTypes = ['Sibling', 'Parent', 'Child', 'Half-Sibling'];
-        
         for (let i = 0; i < c.relations.length; i++) {
           const rel = c.relations[i];
           const isLast = i === c.relations.length - 1;
           
           if (coreFamilyTypes.includes(rel)) {
-            continue; // Allowed anywhere
+            continue;
           }
           
           if (rel === 'Spouse' && isLast) {
             continue; // Spouse allowed but only at the end
           }
           
-          // If we are here, it's a relation that breaks the family rule
           return false;
         }
         
@@ -117,28 +112,8 @@ export default function App() {
         if (c.identifier === CENTER_ID) return true;
         if (c.distance === Infinity || c.relations.length === 0) return false;
         
-        // Exclude Parent/Child to stay in the same generation
-        if (c.relations.some(r => r === 'Parent' || r === 'Child')) return false;
-
-        // Define if it's family using the same logic as above
-        const coreFamilyTypes = ['Sibling', 'Parent', 'Child', 'Half-Sibling'];
-        let isFamily = true;
-        
-        for (let i = 0; i < c.relations.length; i++) {
-          const rel = c.relations[i];
-          const isLast = i === c.relations.length - 1;
-          
-          const isCore = coreFamilyTypes.includes(rel);
-          const isLastSpouse = rel === 'Spouse' && isLast;
-          
-          if (!isCore && !isLastSpouse) {
-            isFamily = false;
-            break;
-          }
-        }
-        
-        // Friends tab = Everyone who is NOT family
-        return !isFamily;
+        const allowedFriendsTypes = ['Friend', 'Partner', 'Spouse'];
+        return c.relations.every(rel => allowedFriendsTypes.includes(rel));
       });
     }
 
