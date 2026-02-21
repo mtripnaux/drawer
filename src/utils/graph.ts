@@ -5,7 +5,7 @@ export interface GraphEdge {
   relation: string;
 }
 
-const RELATION_WEIGHTS: Record<string, number> = {
+export const RELATION_WEIGHTS: Record<string, number> = {
   "Sibling": 0.5,
   "Spouse": 0.5,
   "Partner": 0.6,

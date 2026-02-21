@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
 import { ChevronLeft, Phone, Calendar, MessageSquare, Users } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { CENTER_ID } from '../constants/config';
 import { ContactWithDistance, Group, Contact } from '../types';
 import { getPhoneNumber, formatDate, getInitials } from '../utils/format';
+import { buildGraph, RELATION_WEIGHTS } from '../utils/graph';
 
 interface ProfileViewProps {
   contact: ContactWithDistance;
@@ -12,6 +13,8 @@ interface ProfileViewProps {
   contactMap: Map<string, string>;
   formatName: (id: Contact['identity']) => string;
   groups: Group[];
+  allContacts: ContactWithDistance[];
+  onSelectContact: (contact: ContactWithDistance) => void;
 }
 
 const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[], contactGroupIds: string[], level?: number }) => {
@@ -49,7 +52,7 @@ const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[],
   );
 };
 
-export const ProfileView = ({ contact, onClose, contactMap, formatName, groups }: ProfileViewProps) => {
+export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, allContacts, onSelectContact }: ProfileViewProps) => {
   const hasPhone = contact.phones && contact.phones?.length > 0;
 
   const handleCall = () => {
@@ -68,6 +71,33 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups }
 
   const phoneNumbers = contact.phones?.map(p => getPhoneNumber(p)).join(', ');
 
+  const relatedContacts = useMemo(() => {
+    const graph = buildGraph(allContacts);
+    const neighbors = graph.get(contact.identifier) || [];
+    
+    // Find contact object for each neighbor and associate the min weight
+    const neighborData = neighbors.map(edge => {
+      const c = allContacts.find(nc => nc.identifier === edge.target);
+      const weight = RELATION_WEIGHTS[edge.relation] || 1;
+      return { contact: c, weight, relation: edge.relation };
+    }).filter(n => !!n.contact) as { contact: ContactWithDistance, weight: number, relation: string }[];
+    
+    // Sort by weight
+    neighborData.sort((a, b) => a.weight - b.weight);
+    
+    // Get unique contacts (in case of multiple relations)
+    const uniqueContacts: (ContactWithDistance & { relation: string })[] = [];
+    const seen = new Set<string>();
+    for (const item of neighborData) {
+      if (!seen.has(item.contact.identifier)) {
+        seen.add(item.contact.identifier);
+        uniqueContacts.push({ ...item.contact, relation: item.relation });
+      }
+    }
+    
+    return uniqueContacts;
+  }, [contact.identifier, allContacts]);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -82,9 +112,15 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups }
       <ScrollView contentContainerStyle={styles.profileContent}>
         {/* Avatar Section */}
         <View style={styles.profileHeader}>
-          <View style={[styles.largeAvatar, { backgroundColor: contact.identity.gender === 'male' ? '#eff6ff' : '#fdf2f8' }]}>
-            <Text style={[styles.largeAvatarText, { color: contact.identity.gender === 'male' ? '#1d4ed8' : '#be185d' }]}>
-              {getInitials(contact.identity.first_name!, contact.identity.last_name!)}
+          <View style={[styles.largeAvatar, { 
+            backgroundColor: contact.identity.gender === 'male' || contact.identity.gender === 'Male' ? '#eff6ff' : 
+                            contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#fdf2f8' : '#f4f4f5' 
+          }]}>
+            <Text style={[styles.largeAvatarText, { 
+              color: contact.identity.gender === 'male' || contact.identity.gender === 'Male' ? '#1d4ed8' : 
+                     contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#be185d' : THEME.textMuted 
+            }]}>
+              {getInitials(contact.identity.first_name || '?', contact.identity.last_name || '?')}
             </Text>
           </View>
           <Text style={styles.profileName}>{formatName(contact.identity)}</Text>
@@ -197,6 +233,39 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups }
                 <Text style={styles.infoValue}>No path data available</Text>
              )}
           </View>
+        </View>
+
+        {/* Related Contacts */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Related Contacts</Text>
+          {relatedContacts.length > 0 ? (
+            <View style={styles.relatedList}>
+              {relatedContacts.map((rc) => (
+                <TouchableOpacity 
+                  key={rc.identifier} 
+                  style={styles.relatedListItem}
+                  onPress={() => onSelectContact(rc)}
+                >
+                  <View style={[styles.smallAvatar, { 
+                    backgroundColor: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#eff6ff' : 
+                                    rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#fdf2f8' : '#f4f4f5' 
+                  }]}>
+                    <Text style={[styles.smallAvatarText, { 
+                      color: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#1d4ed8' : 
+                             rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#be185d' : THEME.textMuted 
+                    }]}>
+                      {getInitials(rc.identity.first_name || '?', rc.identity.last_name || '?')}
+                    </Text>
+                  </View>
+                  <Text style={styles.relatedName} numberOfLines={1}>
+                    {formatName(rc.identity)} <Text style={{ color: THEME.textMuted, fontSize: 13, fontWeight: '400' }}>({rc.relation})</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.infoValue}>No related contacts available.</Text>
+          )}
         </View>
 
       </ScrollView>
@@ -368,5 +437,33 @@ const styles = StyleSheet.create({
   stepText: {
     fontSize: 16,
     color: THEME.text,
+  },
+  relatedList: {
+    marginTop: 8,
+    gap: 9,
+  },
+  relatedListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 0,
+  },
+  smallAvatar: {
+    width: 25,
+    height: 25,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  smallAvatarText: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  relatedName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: THEME.text,
+    marginLeft: 12,
   },
 });

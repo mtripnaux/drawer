@@ -4,7 +4,7 @@ import { Phone } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { ContactWithDistance } from '../types';
 import { getInitials } from '../utils/format';
-import { Contact } from '../utils/graph';
+import { Contact } from '../types';
 
 interface ContactItemProps {
   item: ContactWithDistance;
@@ -42,7 +42,7 @@ export const ContactItem = ({ item, onSelect, formatName }: ContactItemProps) =>
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: item.identity.gender === 'male' ? '#eff6ff' : '#fdf2f8' }]}>
             <Text style={[styles.avatarText, { color: item.identity.gender === 'male' ? '#1d4ed8' : '#be185d' }]}>
-              {getInitials(item.identity.first_name, item.identity.last_name)}
+              {getInitials(item.identity.first_name!, item.identity.last_name!)}
             </Text>
           </View>
         </View>

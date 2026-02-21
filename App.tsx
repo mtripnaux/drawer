@@ -218,6 +218,8 @@ export default function App() {
             contactMap={contactMap} 
             formatName={formatName} 
             groups={groups}
+            allContacts={contacts}
+            onSelectContact={setSelectedContact}
           />
          <StatusBar style="dark" />
       </SafeAreaView>
