@@ -9,12 +9,18 @@ export const formatNameWithConfig = (identity: Contact['identity'], config: User
   name = name.replace(/FIRST/g, identity.first_name || '');
   name = name.replace(/LAST/g, identity.last_name || '');
   name = name.replace(/TITLE/g, identity.title || '');
+  name = name.replace(/POST/g, identity.post_nominal || '');
   name = name.replace(/MIDDLE/g, identity.middle_name || '');
   
   name = name.replaceAll("()", '');
   name = name.replaceAll(", ,", ', ');
+  name = name.replace(/\s+/g, ' ').trim();
 
-  return name.replace(/\s+/g, ' ').trim();
+  if(name.endsWith(',')) {
+    name = name.slice(0, -1);
+  }
+
+  return name;
 };
 
 export const getPhoneNumber = (phone: any) => {

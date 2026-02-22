@@ -23,7 +23,7 @@ export const SettingsView = ({ config, onUpdate, onClose }: SettingsViewProps) =
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Name Display Pattern</Text>
-        <Text style={styles.subtitle}>Available tokens: FIRST, LAST, MIDDLE, TITLE, BIRTH_FIRST, BIRTH_MIDDLE, BIRTH_LAST</Text>
+        <Text style={styles.subtitle}>Available tokens: FIRST, LAST, MIDDLE, TITLE, POST, BIRTH_FIRST, BIRTH_MIDDLE, BIRTH_LAST</Text>
         <TextInput
           style={styles.input}
           value={config.nameDisplayPattern}

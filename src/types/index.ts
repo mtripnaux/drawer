@@ -29,6 +29,7 @@ export interface Contact {
     last_name: string | null;
     middle_name?: string | null;
     title?: string | null;
+    post_nominal?: string | null;
     gender: 'male' | 'female' | 'non-binary' | 'Male' | 'Female' | 'Non-binary' | null;
     birth_date?: { 
       year?: number | null; 
@@ -44,6 +45,8 @@ export interface Contact {
     birth_last_name?: string | null;
   };
   phones?: PhoneNumber[] | null;
+  emails?: { label?: string | null; address: string }[] | null;
+  socials?: { network: string; username: string }[] | null;
   links: Link[] | null;
   groups?: string[] | null;
 }
