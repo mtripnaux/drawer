@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
-import { ChevronLeft, Phone, Calendar, MessageSquare, Users } from 'lucide-react-native';
+import { ChevronLeft, Phone, Calendar, MessageSquare, Users, Instagram, Twitter, Facebook, Linkedin, Mail } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { CENTER_ID } from '../constants/config';
 import { ContactWithDistance, Group, Contact } from '../types';
@@ -54,6 +54,7 @@ const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[],
 
 export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, allContacts, onSelectContact }: ProfileViewProps) => {
   const hasPhone = contact.phones && contact.phones?.length > 0;
+  const hasEmail = contact.emails && contact.emails?.length > 0;
 
   const handleCall = () => {
     if (!contact.phones || contact.phones.length === 0) return;
@@ -69,7 +70,33 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
     Linking.openURL(`sms:${phoneNumber}`);
   };
 
-  const phoneNumbers = contact.phones?.map(p => getPhoneNumber(p)).join(', ');
+  const handleSocial = (network: string, username: string) => {
+    let url = '';
+    switch (network.toLowerCase()) {
+      case 'instagram':
+        url = `https://instagram.com/${username}`;
+        break;
+      case 'twitter':
+        url = `https://twitter.com/${username}`;
+        break;
+      case 'facebook':
+        url = `https://facebook.com/${username}`;
+        break;
+      case 'linkedin':
+        url = `https://linkedin.com/in/${username}`;
+        break;
+    }
+    if (url) Linking.openURL(url);
+  };
+
+  const getSocialUsername = (network: string) => {
+    return contact.socials?.find(s => s.network.toLowerCase() === network.toLowerCase())?.username;
+  };
+
+  const instagram = getSocialUsername('instagram');
+  const twitter = getSocialUsername('twitter');
+  const facebook = getSocialUsername('facebook');
+  const linkedin = getSocialUsername('linkedin');
 
   const relatedContacts = useMemo(() => {
     const graph = buildGraph(allContacts);
@@ -133,7 +160,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity // call
             style={[styles.actionButton, !hasPhone && styles.actionButtonDisabled]} 
             onPress={hasPhone ? handleCall : undefined}
             disabled={!hasPhone}
@@ -144,7 +171,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity // message
             style={[styles.actionButton, !hasPhone && styles.actionButtonDisabled]} 
             onPress={hasPhone ? handleSMS : undefined}
             disabled={!hasPhone}
@@ -154,27 +181,91 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             </View>
             <Text style={styles.actionText}>Message</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity // instagram
+            style={[styles.actionButton, !instagram && styles.actionButtonDisabled]} 
+            onPress={instagram ? () => handleSocial('instagram', instagram) : undefined}
+            disabled={!instagram}
+          >
+            <View style={[styles.iconCircle, !instagram && { backgroundColor: THEME.surface }]}>
+              <Instagram size={24} color={instagram ? '#fff' : THEME.textMuted} />
+            </View>
+            <Text style={styles.actionText}>Instagram</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity // facebook
+            style={[styles.actionButton, !facebook && styles.actionButtonDisabled]} 
+            onPress={facebook ? () => handleSocial('facebook', facebook) : undefined}
+            disabled={!facebook}
+          >
+            <View style={[styles.iconCircle, !facebook && { backgroundColor: THEME.surface }]}>
+              <Facebook size={24} color={facebook ? '#fff' : THEME.textMuted} />
+            </View>
+            <Text style={styles.actionText}>Facebook</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity // linkedin
+            style={[styles.actionButton, !linkedin && styles.actionButtonDisabled]} 
+            onPress={linkedin ? () => handleSocial('linkedin', linkedin) : undefined}
+            disabled={!linkedin}
+          >
+            <View style={[styles.iconCircle, !linkedin && { backgroundColor: THEME.surface }]}>
+              <Linkedin size={24} color={linkedin ? '#fff' : THEME.textMuted} />
+            </View>
+            <Text style={styles.actionText}>LinkedIn</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity // twitter
+            style={[styles.actionButton, !twitter && styles.actionButtonDisabled]} 
+            onPress={twitter ? () => handleSocial('twitter', twitter) : undefined}
+            disabled={!twitter}
+          >
+            <View style={[styles.iconCircle, !twitter && { backgroundColor: THEME.surface }]}>
+              <Twitter size={24} color={twitter ? '#fff' : THEME.textMuted} />
+            </View>
+            <Text style={styles.actionText}>Twitter</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Informations</Text>
           
-          {!hasPhone && !contact.identity.birth_date && (
+          {!hasPhone && !hasEmail && !contact.identity.birth_date && (
             <Text style={styles.infoValue}>No contact info available.</Text>
           )}
 
-          {hasPhone && (
-            <View style={styles.infoRow}>
+          {hasPhone && contact.phones?.map((phone, index) => (
+            <View key={`phone-${index}`} style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
                 <Phone size={20} color={THEME.textMuted} />
               </View>
               <View>
-                <Text style={styles.infoLabel}>Phone</Text>
-                <Text style={styles.infoValue}>{phoneNumbers}</Text>
+                <Text style={styles.infoLabel}>
+                  Phone {phone.label && phone.label !== 'default' && (
+                    <Text style={{ color: THEME.textMuted }}>({phone.label})</Text>
+                  )}
+                </Text>
+                <Text style={styles.infoValue}>{getPhoneNumber(phone)}</Text>
               </View>
             </View>
-          )}
+          ))}
+
+          {hasEmail && contact.emails?.map((email, index) => (
+            <View key={`email-${index}`} style={styles.infoRow}>
+              <View style={styles.infoIconContainer}>
+                <Mail size={20} color={THEME.textMuted} />
+              </View>
+              <View>
+                <Text style={styles.infoLabel}>
+                  Email {email.label && email.label !== 'default' && (
+                    <Text style={{ color: THEME.textMuted }}>({email.label})</Text>
+                  )}
+                </Text>
+                <Text style={styles.infoValue}>{email.address}</Text>
+              </View>
+            </View>
+          ))}
           
           {contact.identity.birth_date && (
              <View style={styles.infoRow}>
