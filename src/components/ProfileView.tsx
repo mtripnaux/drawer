@@ -354,37 +354,35 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
         )}
 
         {/* Related Contacts */}
+        {relatedContacts.length > 0 && (
         <View style={[styles.section, { borderBottomWidth: 0 }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Related Contacts</Text>
-          {relatedContacts.length > 0 ? (
-            <View style={styles.relatedList}>
-              {relatedContacts.map((rc) => (
-                <TouchableOpacity 
-                  key={rc.identifier} 
-                  style={styles.relatedListItem}
-                  onPress={() => onSelectContact(rc)}
-                >
-                  <View style={[styles.smallAvatar, { 
-                    backgroundColor: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#eff6ff' : 
-                                    rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#fdf2f8' : theme.surface 
+          <View style={styles.relatedList}>
+            {relatedContacts.map((rc) => (
+              <TouchableOpacity 
+                key={rc.identifier} 
+                style={styles.relatedListItem}
+                onPress={() => onSelectContact(rc)}
+              >
+                <View style={[styles.smallAvatar, { 
+                  backgroundColor: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#eff6ff' : 
+                                  rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#fdf2f8' : theme.surface 
+                }]}>
+                  <Text style={[styles.smallAvatarText, { 
+                    color: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#1d4ed8' : 
+                           rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#be185d' : theme.textMuted 
                   }]}>
-                    <Text style={[styles.smallAvatarText, { 
-                      color: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#1d4ed8' : 
-                             rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#be185d' : theme.textMuted 
-                    }]}>
-                      {getInitials(rc.identity.first_name || '?', rc.identity.last_name || '?')}
-                    </Text>
-                  </View>
-                  <Text style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>
-                    {formatName(rc.identity)} <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: '400' }}>({rc.relation})</Text>
+                    {getInitials(rc.identity.first_name || '?', rc.identity.last_name || '?')}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <Text style={[styles.infoValue, { color: theme.text }]}>No related contacts available.</Text>
-          )}
+                </View>
+                <Text style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>
+                  {formatName(rc.identity)} <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: '400' }}>({rc.relation})</Text>
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
+        )}
 
       </ScrollView>
     </View>
