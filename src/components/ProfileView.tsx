@@ -159,7 +159,6 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
           <Text style={[styles.profileName, { color: theme.text }]}>{formatName(contact.identity)}</Text>
           <Text style={[styles.relation, { color: theme.textMuted }]}>
             {contact.distance === Infinity ? 'Unreachable' : 
-            contact.distance <= 1 ? 'Direct Connection' : 
             `${Math.round(contact.distance * 10) / 10} degrees away`}
           </Text>
         </View>
