@@ -144,7 +144,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
 
       <ScrollView contentContainerStyle={styles.profileContent}>
         {/* Avatar Section */}
-        <View style={styles.profileHeader}>
+        <View style={[styles.profileHeader, { borderBottomColor: theme.border }]}>
           <View style={[styles.largeAvatar, { 
             backgroundColor: contact.identity.gender === 'male' || contact.identity.gender === 'Male' ? '#eff6ff' : 
                             contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#fdf2f8' : theme.surface 
@@ -335,7 +335,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
         </View>
 
         {/* Related Contacts */}
-        <View style={[styles.section, { borderBottomColor: theme.border }]}>
+        <View style={[styles.section, { borderBottomWidth: 0 }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Related Contacts</Text>
           {relatedContacts.length > 0 ? (
             <View style={styles.relatedList}>
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   profileContent: {
-    paddingBottom: 40,
+    paddingBottom: 0,
   },
   profileHeader: {
     alignItems: 'center',

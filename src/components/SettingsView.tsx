@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Platform, Pressable, Animated, Easing } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { UserConfig } from '../constants/config';
@@ -13,6 +13,25 @@ interface SettingsViewProps {
   onClose: () => void;
   theme: ThemeType;
 }
+
+const OptionRow = ({ onPress, label, textColor, children }: { onPress: () => void; label: string; textColor: string; children: React.ReactNode }) => {
+  const opacity = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(opacity, { toValue: 0.5, duration: 80, useNativeDriver: true }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(opacity, { toValue: 1, duration: 250, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+  };
+
+  return (
+    <Pressable style={styles.optionRow} onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.Text style={[styles.optionText, { color: textColor, opacity }]}>{label}</Animated.Text>
+      {children}
+    </Pressable>
+  );
+};
 
 export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewProps) => {
   return (
@@ -74,25 +93,33 @@ export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewP
       <View style={[styles.section, { borderBottomColor: theme.border }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance & Visibility</Text>
         
-        <TouchableOpacity 
-          style={styles.optionRow}
+        <OptionRow
           onPress={() => onUpdate({...config, darkTheme: !config.darkTheme})}
+          label="Dark Theme (experimental)"
+          textColor={theme.text}
         >
-          <Text style={[styles.optionText, { color: theme.text }]}>Dark Theme (experimental)</Text>
           <View style={[styles.toggle, config.darkTheme ? { backgroundColor: theme.primary } : { backgroundColor: theme.border }]}>
-             <View style={[styles.toggleKnob, config.darkTheme && styles.toggleKnobActive]} />
+            <View style={[
+                styles.toggleKnob,
+                config.darkTheme ? { backgroundColor: theme.primaryForeground } : {},
+                config.darkTheme && styles.toggleKnobActive
+            ]} />
           </View>
-        </TouchableOpacity>
+        </OptionRow>
 
-        <TouchableOpacity 
-          style={styles.optionRow}
+        <OptionRow
           onPress={() => onUpdate({...config, showDeceasedPeople: !config.showDeceasedPeople})}
+          label="Show Deceased People"
+          textColor={theme.text}
         >
-          <Text style={[styles.optionText, { color: theme.text }]}>Show Deceased People</Text>
           <View style={[styles.toggle, config.showDeceasedPeople ? { backgroundColor: theme.primary } : { backgroundColor: theme.border }]}>
-            <View style={[styles.toggleKnob, config.showDeceasedPeople && styles.toggleKnobActive]} />
+            <View style={[
+                styles.toggleKnob,
+                config.showDeceasedPeople ? { backgroundColor: theme.primaryForeground } : {},
+                config.showDeceasedPeople && styles.toggleKnobActive
+            ]} />
           </View>
-        </TouchableOpacity>
+        </OptionRow>
       </View>
     </View>
   );
@@ -182,7 +209,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Default for inactive state (on gray background)
     ...Platform.select({
       web: {
         boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',

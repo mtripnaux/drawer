@@ -267,14 +267,10 @@ export default function App() {
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: currentTheme.surface, borderColor: currentTheme.border }]}>
           <Search size={20} color={currentTheme.textMuted} style={styles.searchIcon} />
           <TextInput
-            style={[styles.searchInput, { 
-              color: currentTheme.text, 
-              backgroundColor: currentTheme.surface,
-              borderColor: currentTheme.border
-            }]}
+            style={[styles.searchInput, { color: currentTheme.text }]}
             placeholder="Search contacts..."
             placeholderTextColor={currentTheme.textMuted}
             value={searchQuery}
