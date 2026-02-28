@@ -120,6 +120,20 @@ export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewP
             ]} />
           </View>
         </OptionRow>
+
+        <OptionRow
+          onPress={() => onUpdate({...config, hideContactsWithoutPhone: !config.hideContactsWithoutPhone})}
+          label="Hide Contacts Without Phone"
+          textColor={theme.text}
+        >
+          <View style={[styles.toggle, config.hideContactsWithoutPhone ? { backgroundColor: theme.primary } : { backgroundColor: theme.border }]}>
+            <View style={[
+                styles.toggleKnob,
+                config.hideContactsWithoutPhone ? { backgroundColor: theme.primaryForeground } : {},
+                config.hideContactsWithoutPhone && styles.toggleKnobActive
+            ]} />
+          </View>
+        </OptionRow>
       </View>
     </View>
   );

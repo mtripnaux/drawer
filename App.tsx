@@ -104,6 +104,11 @@ export default function App() {
       result = result.filter(c => c.identity.is_alive !== false);
     }
 
+    // Filter by phone
+    if (config.hideContactsWithoutPhone && !searchQuery) {
+      result = result.filter(c => c.phones && c.phones.length > 0);
+    }
+
     // Filter by search
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
