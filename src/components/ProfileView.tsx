@@ -236,12 +236,9 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
         </View>
 
         {/* Info Section */}
+        {(hasPhone || hasEmail || contact.identity.birth_date) && (
         <View style={[styles.section, { borderBottomColor: theme.border }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Contact Informations</Text>
-          
-          {!hasPhone && !hasEmail && !contact.identity.birth_date && (
-            <Text style={[styles.infoValue, { color: theme.text }]}>No contact info available.</Text>
-          )}
 
           {hasPhone && contact.phones?.map((phone, index) => (
             <View key={`phone-${index}`} style={styles.infoRow}>
@@ -296,6 +293,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
              </View>
           )}
         </View>
+        )}
 
         {/* Groups */}
         {contact.groups && contact.groups.length > 0 && (
@@ -320,7 +318,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                 <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
                 {(contact.relations.length > 0) && <View style={[styles.stepLine, { backgroundColor: theme.border }]} />}
                 <Text style={[styles.stepText, { color: theme.text }]}>
-                     Me <Text style={{ color: theme.textMuted }}>({contactMap.get(config.centerId) || 'Me'})</Text>
+                  Me <Text style={{ color: theme.textMuted }}>({contactMap.get(config.centerId) || 'Me'})</Text>
                 </Text>
              </TouchableOpacity>
 
@@ -549,9 +547,9 @@ const styles = StyleSheet.create({
   stepLine: {
     position: 'absolute',
     left: 3.5,
-    top: 8,
+    top: 25,
     width: 1,
-    height: 32,
+    height: 15,
     backgroundColor: THEME.border,
   },
   stepText: {
