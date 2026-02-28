@@ -37,24 +37,32 @@ export const getInitials = (first: string, last: string) => {
 
 export const formatTwoDigits = (num: number) => num.toString().padStart(2, '0');
 
-export const formatDate = (date: any) => {
+export const formatDate = (date: any, config: UserConfig) => {
   if (!date) return '';
-  const parts = [];
-  if (date.day) parts.push(formatTwoDigits(date.day));
-  if (date.month) parts.push(formatTwoDigits(date.month));
-  if (date.year) parts.push(date.year);
-  
-  let dateStr = parts.join('/');
-  
-  const timeParts = [];
-  if (date.hour !== null && date.hour !== undefined) timeParts.push(formatTwoDigits(date.hour));
-  if (date.minute !== null && date.minute !== undefined) timeParts.push(formatTwoDigits(date.minute));
-  if (date.second !== null && date.second !== undefined) timeParts.push(formatTwoDigits(date.second));
-  
-  if (timeParts.length > 0) {
-    if (dateStr) dateStr += ' ';
-    dateStr += timeParts.join(':');
-  }
-  
-  return dateStr;
+
+  let format = config.dateFormat; // e.g. "DD/MM/YYYY" or "YYYY-MM-DD"
+
+  const MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  if (date.month) format = format.replace('MONTH', MONTHS[date.month - 1]);
+  if (date.day) format = format.replace('DD', formatTwoDigits(date.day));
+  if (date.month) format = format.replace('MM', formatTwoDigits(date.month));
+  if (date.day) format = format.replace('D', date.day.toString());
+  if (date.month) format = format.replace('M', date.month.toString());
+  if (date.year) format = format.replace('YYYY', date.year.toString());
+
+  format = format
+    .replace('DD', '')
+    .replace('MM', '')
+    .replace('YYYY', '')
+    .replace('D', '')
+    .replace('M', '')
+    .replace('MONTH', '');
+
+  format = format.replace(/\/\/+/g, '/').replace(/--+/g, '-').replace(/^\/|\/$/g, '');
+
+  return format;
 };

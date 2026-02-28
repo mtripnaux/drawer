@@ -23,7 +23,7 @@ import { SettingsView } from './src/components/SettingsView';
 import { ProfileView } from './src/components/ProfileView';
 import { ContactItem } from './src/components/ContactItem';
 import { formatNameWithConfig } from './src/utils/format';
-import { THEME } from './src/constants/theme';
+import { LIGHT_THEME, DARK_THEME, THEME } from './src/constants/theme';
 import { defaultUserConfig, UserConfig, CENTER_ID } from './src/constants/config';
 import { ContactWithDistance, Group } from './src/types';
 import { Contact } from './src/types/index';
@@ -36,7 +36,10 @@ export default function App() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedContact, setSelectedContact] = useState<ContactWithDistance | null>(null);
 
+  const currentTheme = useMemo(() => config.darkTheme ? DARK_THEME : LIGHT_THEME, [config.darkTheme]);
+
   // Scroll tracking for tabs
+
   const [scrollX, setScrollX] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const [viewWidth, setViewWidth] = useState(0);
@@ -175,7 +178,16 @@ export default function App() {
     }
 
     // Sort
-    result.sort((a, b) => {
+    const sorted = [...result].sort((a, b) => {
+      if (config.sortBy === 'ALPHABETICAL') {
+        const nameA = formatName(a.identity);
+        const nameB = formatName(b.identity);
+        return sortOrder === 'asc' 
+          ? nameA.localeCompare(nameB) 
+          : nameB.localeCompare(nameA);
+      }
+      
+      // Default: PROXIMITY
       const distA = a.distance === Infinity ? Number.MAX_SAFE_INTEGER : a.distance;
       const distB = b.distance === Infinity ? Number.MAX_SAFE_INTEGER : b.distance;
       
@@ -189,29 +201,29 @@ export default function App() {
       return 0;
     });
 
-    return result;
+    return sorted;
   }, [contacts, searchQuery, activeTab, sortOrder, config]);
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={THEME.primary} />
+      <View style={[styles.center, { backgroundColor: currentTheme.background }]}>
+        <ActivityIndicator size="large" color={currentTheme.primary} />
       </View>
     );
   }
 
   if (showSettings) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-         <SettingsView config={config} onUpdate={setConfig} onClose={() => setShowSettings(false)} />
-         <StatusBar style="dark" />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: currentTheme.background }]}>
+         <SettingsView config={config} onUpdate={setConfig} onClose={() => setShowSettings(false)} theme={currentTheme} />
+         <StatusBar style={config.darkTheme ? 'light' : 'dark'} />
       </SafeAreaView> 
     );
   }
 
   if (selectedContact) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: currentTheme.background }]}>
          <ProfileView 
             contact={selectedContact} 
             onClose={() => setSelectedContact(null)} 
@@ -220,45 +232,51 @@ export default function App() {
             groups={groups}
             allContacts={contacts}
             onSelectContact={setSelectedContact}
+            config={config}
+            theme={currentTheme}
           />
-         <StatusBar style="dark" />
+         <StatusBar style={config.darkTheme ? 'light' : 'dark'} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: currentTheme.background }]}>
+      <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
         
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Your Network</Text>
-            <Text style={styles.subtitle}>{filteredContacts.length} connections found</Text>
+            <Text style={[styles.title, { color: currentTheme.text }]}>Your Network</Text>
+            <Text style={[styles.subtitle, { color: currentTheme.textMuted }]}>{filteredContacts.length} connections found</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity 
-              style={styles.iconButton}
+              style={[styles.iconButton, { backgroundColor: currentTheme.surface, borderColor: currentTheme.border }]}
               onPress={() => setShowSettings(true)}
             >
-              <Settings size={20} color={THEME.text} />
+              <Settings size={20} color={currentTheme.text} />
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.iconButton}
+              style={[styles.iconButton, { backgroundColor: currentTheme.surface, borderColor: currentTheme.border }]}
               onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
             >
-              <ArrowUpDown size={20} color={THEME.text} />
+              <ArrowUpDown size={20} color={currentTheme.text} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Search size={20} color={THEME.textMuted} style={styles.searchIcon} />
+          <Search size={20} color={currentTheme.textMuted} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { 
+              color: currentTheme.text, 
+              backgroundColor: currentTheme.surface,
+              borderColor: currentTheme.border
+            }]}
             placeholder="Search contacts..."
-            placeholderTextColor={THEME.textMuted}
+            placeholderTextColor={currentTheme.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -281,10 +299,20 @@ export default function App() {
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
-                style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+                style={[
+                    styles.tab, 
+                    activeTab === tab.id 
+                       ? { backgroundColor: currentTheme.primary, borderColor: currentTheme.primary } 
+                       : { backgroundColor: currentTheme.surface, borderColor: currentTheme.border }
+                ]}
                 onPress={() => setActiveTab(tab.id)}
               >
-                <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>
+                <Text style={[
+                   styles.tabText, 
+                   activeTab === tab.id 
+                     ? { color: currentTheme.primaryForeground } 
+                     : { color: currentTheme.text }
+                ]}>
                   {tab.name}
                 </Text>
               </TouchableOpacity>
@@ -292,7 +320,7 @@ export default function App() {
           </ScrollView>
           {true && (
             <LinearGradient
-              colors={[THEME.background, 'transparent']}
+              colors={[currentTheme.background, 'transparent']}
               locations={[0.3, 0.43]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -302,7 +330,7 @@ export default function App() {
           )}
           {true && (
             <LinearGradient
-              colors={['transparent', THEME.background]}
+              colors={['transparent', currentTheme.background]}
               locations={[0.56, 0.69]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -315,12 +343,14 @@ export default function App() {
         {/* List */}
         <FlatList
           data={filteredContacts}
+          extraData={currentTheme}
           keyExtractor={(item) => item.identifier}
           renderItem={({ item }) => (
             <ContactItem 
               item={item} 
               onSelect={setSelectedContact} 
               formatName={formatName} 
+              theme={currentTheme}
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -328,16 +358,16 @@ export default function App() {
           persistentScrollbar={true}
           bounces={true}
           overScrollMode="always"
-          indicatorStyle="black"
+          indicatorStyle={config.darkTheme ? "white" : "black"}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Users size={48} color={THEME.border} />
-              <Text style={styles.emptyText}>No contacts found</Text>
+              <Users size={48} color={currentTheme.border} />
+              <Text style={[styles.emptyText, { color: currentTheme.textMuted }]}>No contacts found</Text>
             </View>
           }
         />
       </View>
-      <StatusBar style="dark" />
+      <StatusBar style={config.darkTheme ? 'light' : 'dark'} />
     </SafeAreaView>
   );
 }

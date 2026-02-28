@@ -4,43 +4,92 @@ import { ChevronLeft } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
 import { UserConfig } from '../constants/config';
 
+type ThemeType = typeof THEME;
+
+
 interface SettingsViewProps {
   config: UserConfig;
   onUpdate: (c: UserConfig) => void;
   onClose: () => void;
+  theme: ThemeType;
 }
 
-export const SettingsView = ({ config, onUpdate, onClose }: SettingsViewProps) => {
+export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewProps) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.iconButton}>
-          <ChevronLeft size={20} color={THEME.text} />
+        <TouchableOpacity onPress={onClose} style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <ChevronLeft size={20} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { fontSize: 20 }]}>Settings</Text>
+        <Text style={[styles.title, { fontSize: 20, color: theme.text }]}>Settings</Text>
         <View style={{ width: 44 }} />
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Name Display Pattern</Text>
-        <Text style={styles.subtitle}>Available tokens: FIRST, LAST, MIDDLE, TITLE, POST, BIRTH_FIRST, BIRTH_MIDDLE, BIRTH_LAST</Text>
+      <View style={[styles.section, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>General</Text>
+        
+        <Text style={[styles.subtitle, {marginTop: 0, color: theme.textMuted }]}>Name Display Pattern</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
           value={config.nameDisplayPattern}
           onChangeText={(text) => onUpdate({...config, nameDisplayPattern: text})}
           placeholder="e.g. TITLE FIRST LAST"
-          placeholderTextColor={THEME.textMuted}
+          placeholderTextColor={theme.textMuted}
         />
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Visibility</Text>
+        <Text style={[styles.subtitle, {marginTop: 0, color: theme.textMuted }]}>Date Format Pattern</Text>
+        <TextInput
+          style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
+          value={config.dateFormat}
+          onChangeText={(text) => onUpdate({...config, dateFormat: text})}
+          placeholder="e.g. MONTH DD, YYYY"
+          placeholderTextColor={theme.textMuted}
+        />
+
+        <Text style={[styles.subtitle, {marginTop: 0, color: theme.textMuted }]}>Sort By</Text>
+        <View style={[styles.row, { marginTop: 10, gap: 10 }]}>
+            {['PROXIMITY', 'ALPHABETICAL'].map((option) => (
+                <TouchableOpacity
+                    key={option}
+                    style={[
+                        styles.chip, 
+                        config.sortBy === option 
+                            ? { backgroundColor: theme.primary, borderColor: theme.primary } 
+                            : { backgroundColor: theme.surface, borderColor: theme.border }
+                    ]}
+                    onPress={() => onUpdate({...config, sortBy: option})}
+                >
+                    <Text style={[
+                        styles.chipText, 
+                        config.sortBy === option ? { color: theme.primaryForeground } : { color: theme.text }
+                    ]}>
+                        {option === 'PROXIMITY' ? 'Proximity' : 'Alphabetical'}
+                    </Text>
+                </TouchableOpacity>
+            ))}
+        </View>
+      </View>
+      
+
+      <View style={[styles.section, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance & Visibility</Text>
+        
+        <TouchableOpacity 
+          style={styles.optionRow}
+          onPress={() => onUpdate({...config, darkTheme: !config.darkTheme})}
+        >
+          <Text style={[styles.optionText, { color: theme.text }]}>Dark Theme (experimental)</Text>
+          <View style={[styles.toggle, config.darkTheme ? { backgroundColor: theme.primary } : { backgroundColor: theme.border }]}>
+             <View style={[styles.toggleKnob, config.darkTheme && styles.toggleKnobActive]} />
+          </View>
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.optionRow}
           onPress={() => onUpdate({...config, showDeceasedPeople: !config.showDeceasedPeople})}
         >
-          <Text style={styles.optionText}>Show Deceased People</Text>
-          <View style={[styles.toggle, config.showDeceasedPeople && styles.toggleActive]}>
+          <Text style={[styles.optionText, { color: theme.text }]}>Show Deceased People</Text>
+          <View style={[styles.toggle, config.showDeceasedPeople ? { backgroundColor: theme.primary } : { backgroundColor: theme.border }]}>
             <View style={[styles.toggleKnob, config.showDeceasedPeople && styles.toggleKnobActive]} />
           </View>
         </TouchableOpacity>
@@ -134,16 +183,46 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     backgroundColor: '#fff',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+      },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+      },
+    }),
   },
   toggleKnobActive: {
     alignSelf: 'flex-end',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: THEME.surface,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  chipActive: {
+    backgroundColor: THEME.primary,
+    borderColor: THEME.primary,
+  },
+  chipText: {
+    color: THEME.text,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  chipTextActive: {
+    color: '#fff',
   },
 });

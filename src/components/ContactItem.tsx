@@ -6,13 +6,16 @@ import { ContactWithDistance } from '../types';
 import { getInitials } from '../utils/format';
 import { Contact } from '../types';
 
+type ThemeType = typeof THEME;
+
 interface ContactItemProps {
   item: ContactWithDistance;
   onSelect: (contact: ContactWithDistance) => void;
   formatName: (identity: Contact['identity']) => string;
+  theme: ThemeType;
 }
 
-export const ContactItem = ({ item, onSelect, formatName }: ContactItemProps) => {
+export const ContactItem = ({ item, onSelect, formatName, theme }: ContactItemProps) => {
   const hasPhone = item.phones && item.phones.length > 0;
   const relationChain = item.relations || [];
   let relationText = '';
@@ -37,8 +40,8 @@ export const ContactItem = ({ item, onSelect, formatName }: ContactItemProps) =>
   };
 
   return (
-    <View style={styles.cardContainer}>
-      <TouchableOpacity style={styles.card} onPress={() => onSelect(item)}>
+    <View style={[styles.cardContainer, { borderBottomColor: theme.border }]}>
+      <TouchableOpacity style={[styles.card, { backgroundColor: theme.background }]} onPress={() => onSelect(item)}>
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: item.identity.gender === 'male' ? '#eff6ff' : '#fdf2f8' }]}>
             <Text style={[styles.avatarText, { color: item.identity.gender === 'male' ? '#1d4ed8' : '#be185d' }]}>
@@ -48,8 +51,8 @@ export const ContactItem = ({ item, onSelect, formatName }: ContactItemProps) =>
         </View>
         
         <View style={styles.cardContent}>
-          <Text style={styles.name}>{formatName(item.identity)}</Text>
-          <Text style={styles.relation}>
+          <Text style={[styles.name, { color: theme.text }]}>{formatName(item.identity)}</Text>
+          <Text style={[styles.relation, { color: theme.textMuted }]}>
             {relationText}
           </Text>
         </View>

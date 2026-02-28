@@ -2,10 +2,12 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
 import { ChevronLeft, Phone, Calendar, MessageSquare, Users, Instagram, Twitter, Facebook, Linkedin, Mail } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
-import { CENTER_ID } from '../constants/config';
+import { CENTER_ID, UserConfig } from '../constants/config';
 import { ContactWithDistance, Group, Contact } from '../types';
 import { getPhoneNumber, formatDate, getInitials } from '../utils/format';
 import { buildGraph, RELATION_WEIGHTS } from '../utils/graph';
+
+type ThemeType = typeof THEME;
 
 interface ProfileViewProps {
   contact: ContactWithDistance;
@@ -15,9 +17,11 @@ interface ProfileViewProps {
   groups: Group[];
   allContacts: ContactWithDistance[];
   onSelectContact: (contact: ContactWithDistance) => void;
+  config: UserConfig;
+  theme: ThemeType;
 }
 
-const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[], contactGroupIds: string[], level?: number }) => {
+const NestedGroups = ({ groups, contactGroupIds, level = 0, theme }: { groups: Group[], contactGroupIds: string[], level?: number, theme: ThemeType }) => {
   const isMatch = (group: Group): boolean => {
     if (contactGroupIds.includes(group.identifier)) return true;
     return !!group.subgroups?.some(isMatch);
@@ -33,8 +37,8 @@ const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[],
         return (
           <View key={group.identifier} style={styles.groupItem}>
             <View style={styles.groupHeader}>
-              <View style={styles.bullet} />
-              <Text style={styles.groupName}>
+              <View style={[styles.bullet, { backgroundColor: theme.primary }]} />
+              <Text style={[styles.groupName, { color: theme.text }]}>
                 {group.name}
               </Text>
             </View>
@@ -43,6 +47,7 @@ const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[],
                 groups={group.subgroups} 
                 contactGroupIds={contactGroupIds} 
                 level={level + 1} 
+                theme={theme}
               />
             )}
           </View>
@@ -52,9 +57,10 @@ const NestedGroups = ({ groups, contactGroupIds, level = 0 }: { groups: Group[],
   );
 };
 
-export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, allContacts, onSelectContact }: ProfileViewProps) => {
+export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, allContacts, onSelectContact, config, theme }: ProfileViewProps) => {
   const hasPhone = contact.phones && contact.phones?.length > 0;
   const hasEmail = contact.emails && contact.emails?.length > 0;
+
 
   const handleCall = () => {
     if (!contact.phones || contact.phones.length === 0) return;
@@ -126,13 +132,13 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
   }, [contact.identifier, allContacts]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.iconButton}>
-          <ChevronLeft size={20} color={THEME.text} />
+        <TouchableOpacity onPress={onClose} style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <ChevronLeft size={20} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { fontSize: 20 }]}>Profile</Text>
+        <Text style={[styles.title, { fontSize: 20, color: theme.text }]}>Profile</Text>
         <View style={{ width: 44 }} /> 
       </View>
 
@@ -141,34 +147,36 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
         <View style={styles.profileHeader}>
           <View style={[styles.largeAvatar, { 
             backgroundColor: contact.identity.gender === 'male' || contact.identity.gender === 'Male' ? '#eff6ff' : 
-                            contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#fdf2f8' : '#f4f4f5' 
+                            contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#fdf2f8' : theme.surface 
           }]}>
             <Text style={[styles.largeAvatarText, { 
               color: contact.identity.gender === 'male' || contact.identity.gender === 'Male' ? '#1d4ed8' : 
-                     contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#be185d' : THEME.textMuted 
+                     contact.identity.gender === 'female' || contact.identity.gender === 'Female' ? '#be185d' : theme.textMuted 
             }]}>
               {getInitials(contact.identity.first_name || '?', contact.identity.last_name || '?')}
             </Text>
           </View>
-          <Text style={styles.profileName}>{formatName(contact.identity)}</Text>
-          <Text style={styles.relation}>
+          <Text style={[styles.profileName, { color: theme.text }]}>{formatName(contact.identity)}</Text>
+          <Text style={[styles.relation, { color: theme.textMuted }]}>
             {contact.distance === Infinity ? 'Unreachable' : 
             contact.distance <= 1 ? 'Direct Connection' : 
             `${Math.round(contact.distance * 10) / 10} degrees away`}
           </Text>
         </View>
 
+
+
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        <View style={[styles.actionButtons, { borderBottomColor: theme.border }]}>
           <TouchableOpacity // call
             style={[styles.actionButton, !hasPhone && styles.actionButtonDisabled]} 
             onPress={hasPhone ? handleCall : undefined}
             disabled={!hasPhone}
           >
-            <View style={[styles.iconCircle, !hasPhone && { backgroundColor: THEME.surface }]}>
-              <Phone size={24} color={hasPhone ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !hasPhone ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <Phone size={24} color={hasPhone ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>Call</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>Call</Text>
           </TouchableOpacity>
 
           <TouchableOpacity // message
@@ -176,10 +184,10 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             onPress={hasPhone ? handleSMS : undefined}
             disabled={!hasPhone}
           >
-            <View style={[styles.iconCircle, !hasPhone && { backgroundColor: THEME.surface }]}>
-              <MessageSquare size={24} color={hasPhone ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !hasPhone ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <MessageSquare size={24} color={hasPhone ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>Message</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>Message</Text>
           </TouchableOpacity>
 
           <TouchableOpacity // instagram
@@ -187,10 +195,10 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             onPress={instagram ? () => handleSocial('instagram', instagram) : undefined}
             disabled={!instagram}
           >
-            <View style={[styles.iconCircle, !instagram && { backgroundColor: THEME.surface }]}>
-              <Instagram size={24} color={instagram ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !instagram ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <Instagram size={24} color={instagram ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>Instagram</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>Instagram</Text>
           </TouchableOpacity>
 
           <TouchableOpacity // facebook
@@ -198,10 +206,10 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             onPress={facebook ? () => handleSocial('facebook', facebook) : undefined}
             disabled={!facebook}
           >
-            <View style={[styles.iconCircle, !facebook && { backgroundColor: THEME.surface }]}>
-              <Facebook size={24} color={facebook ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !facebook ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <Facebook size={24} color={facebook ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>Facebook</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>Facebook</Text>
           </TouchableOpacity>
 
           <TouchableOpacity // linkedin
@@ -209,10 +217,10 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             onPress={linkedin ? () => handleSocial('linkedin', linkedin) : undefined}
             disabled={!linkedin}
           >
-            <View style={[styles.iconCircle, !linkedin && { backgroundColor: THEME.surface }]}>
-              <Linkedin size={24} color={linkedin ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !linkedin ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <Linkedin size={24} color={linkedin ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>LinkedIn</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>LinkedIn</Text>
           </TouchableOpacity>
 
           <TouchableOpacity // twitter
@@ -220,33 +228,33 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
             onPress={twitter ? () => handleSocial('twitter', twitter) : undefined}
             disabled={!twitter}
           >
-            <View style={[styles.iconCircle, !twitter && { backgroundColor: THEME.surface }]}>
-              <Twitter size={24} color={twitter ? '#fff' : THEME.textMuted} />
+            <View style={[styles.iconCircle, !twitter ? { backgroundColor: theme.surface } : { backgroundColor: theme.primary }]}>
+              <Twitter size={24} color={twitter ? theme.primaryForeground : theme.textMuted} />
             </View>
-            <Text style={styles.actionText}>Twitter</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>Twitter</Text>
           </TouchableOpacity>
         </View>
 
         {/* Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Informations</Text>
+        <View style={[styles.section, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Contact Informations</Text>
           
           {!hasPhone && !hasEmail && !contact.identity.birth_date && (
-            <Text style={styles.infoValue}>No contact info available.</Text>
+            <Text style={[styles.infoValue, { color: theme.text }]}>No contact info available.</Text>
           )}
 
           {hasPhone && contact.phones?.map((phone, index) => (
             <View key={`phone-${index}`} style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
-                <Phone size={20} color={THEME.textMuted} />
+                <Phone size={20} color={theme.textMuted} />
               </View>
               <View>
-                <Text style={styles.infoLabel}>
+                <Text style={[styles.infoLabel, { color: theme.textMuted }]}>
                   Phone {phone.label && phone.label !== 'default' && (
-                    <Text style={{ color: THEME.textMuted }}>({phone.label})</Text>
+                    <Text style={{ color: theme.textMuted }}>({phone.label})</Text>
                   )}
                 </Text>
-                <Text style={styles.infoValue}>{getPhoneNumber(phone)}</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>{getPhoneNumber(phone)}</Text>
               </View>
             </View>
           ))}
@@ -254,15 +262,15 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
           {hasEmail && contact.emails?.map((email, index) => (
             <View key={`email-${index}`} style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
-                <Mail size={20} color={THEME.textMuted} />
+                <Mail size={20} color={theme.textMuted} />
               </View>
               <View>
-                <Text style={styles.infoLabel}>
+                <Text style={[styles.infoLabel, { color: theme.textMuted }]}>
                   Email {email.label && email.label !== 'default' && (
-                    <Text style={{ color: THEME.textMuted }}>({email.label})</Text>
+                    <Text style={{ color: theme.textMuted }}>({email.label})</Text>
                   )}
                 </Text>
-                <Text style={styles.infoValue}>{email.address}</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>{email.address}</Text>
               </View>
             </View>
           ))}
@@ -270,12 +278,12 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
           {contact.identity.birth_date && (
              <View style={styles.infoRow}>
                <View style={styles.infoIconContainer}>
-                 <Calendar size={20} color={THEME.textMuted} />
+                 <Calendar size={20} color={theme.textMuted} />
                </View>
                <View>
-                 <Text style={styles.infoLabel}>Born</Text>
-                 <Text style={styles.infoValue}>
-                   {formatDate(contact.identity.birth_date)}
+                 <Text style={[styles.infoLabel, { color: theme.textMuted }]}>Born</Text>
+                 <Text style={[styles.infoValue, { color: theme.text }]}>
+                   {formatDate(contact.identity.birth_date, config)}
                  </Text>
                </View>
              </View>
@@ -284,21 +292,21 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
 
         {/* Groups */}
         {contact.groups && contact.groups.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Groups and Subgroups</Text>
-            <NestedGroups groups={groups} contactGroupIds={contact.groups} />
+          <View style={[styles.section, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups and Subgroups</Text>
+            <NestedGroups groups={groups} contactGroupIds={contact.groups} theme={theme} />
           </View>
         )}
 
         {/* Relationship Path */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Relationship Path</Text>
+        <View style={[styles.section, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Relationship Path</Text>
           <View style={styles.pathContainer}>
              <View style={styles.pathStep}>
-                <View style={styles.stepDot} />
-                {(contact.relations.length > 0) && <View style={styles.stepLine} />}
-                <Text style={styles.stepText}>
-                     Me <Text style={{ color: THEME.textMuted }}>({contactMap.get(CENTER_ID) || 'Me'})</Text>
+                <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+                {(contact.relations.length > 0) && <View style={[styles.stepLine, { backgroundColor: theme.border }]} />}
+                <Text style={[styles.stepText, { color: theme.text }]}>
+                     Me <Text style={{ color: theme.textMuted }}>({contactMap.get(CENTER_ID) || 'Me'})</Text>
                 </Text>
              </View>
 
@@ -311,24 +319,24 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                  
                  return (
                  <View key={index} style={styles.pathStep}>
-                    <View style={styles.stepDot} />
-                    {index < contact.relations.length - 1 && <View style={styles.stepLine} />}
-                    <Text style={styles.stepText}>
-                      {rel} <Text style={{ color: THEME.textMuted }}>({name})</Text>
+                    <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+                    {index < contact.relations.length - 1 && <View style={[styles.stepLine, { backgroundColor: theme.border }]} />}
+                    <Text style={[styles.stepText, { color: theme.text }]}>
+                      {rel} <Text style={{ color: theme.textMuted }}>({name})</Text>
                     </Text>
                  </View>
                  );
                })
              }
              {contact.relations.length === 0 && contact.distance !== 0 && (
-                <Text style={styles.infoValue}>No path data available</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>No path data available</Text>
              )}
           </View>
         </View>
 
         {/* Related Contacts */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Related Contacts</Text>
+        <View style={[styles.section, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Related Contacts</Text>
           {relatedContacts.length > 0 ? (
             <View style={styles.relatedList}>
               {relatedContacts.map((rc) => (
@@ -339,23 +347,23 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                 >
                   <View style={[styles.smallAvatar, { 
                     backgroundColor: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#eff6ff' : 
-                                    rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#fdf2f8' : '#f4f4f5' 
+                                    rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#fdf2f8' : theme.surface 
                   }]}>
                     <Text style={[styles.smallAvatarText, { 
                       color: rc.identity.gender === 'male' || rc.identity.gender === 'Male' ? '#1d4ed8' : 
-                             rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#be185d' : THEME.textMuted 
+                             rc.identity.gender === 'female' || rc.identity.gender === 'Female' ? '#be185d' : theme.textMuted 
                     }]}>
                       {getInitials(rc.identity.first_name || '?', rc.identity.last_name || '?')}
                     </Text>
                   </View>
-                  <Text style={styles.relatedName} numberOfLines={1}>
-                    {formatName(rc.identity)} <Text style={{ color: THEME.textMuted, fontSize: 13, fontWeight: '400' }}>({rc.relation})</Text>
+                  <Text style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>
+                    {formatName(rc.identity)} <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: '400' }}>({rc.relation})</Text>
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           ) : (
-            <Text style={styles.infoValue}>No related contacts available.</Text>
+            <Text style={[styles.infoValue, { color: theme.text }]}>No related contacts available.</Text>
           )}
         </View>
 
