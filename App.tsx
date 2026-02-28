@@ -24,7 +24,7 @@ import { ProfileView } from './src/components/ProfileView';
 import { ContactItem } from './src/components/ContactItem';
 import { formatNameWithConfig } from './src/utils/format';
 import { LIGHT_THEME, DARK_THEME, THEME } from './src/constants/theme';
-import { defaultUserConfig, UserConfig, CENTER_ID } from './src/constants/config';
+import { defaultUserConfig, UserConfig } from './src/constants/config';
 import { ContactWithDistance, Group } from './src/types';
 import { Contact } from './src/types/index';
 
@@ -44,7 +44,7 @@ export default function App() {
   const [contentWidth, setContentWidth] = useState(0);
   const [viewWidth, setViewWidth] = useState(0);
 
-  const { contacts, groups, loading } = useContacts();
+  const { contacts, groups, loading } = useContacts(config.centerId);
 
   const tabs = useMemo(() => {
     const defaultTabs = [
@@ -122,7 +122,7 @@ export default function App() {
     // Filter by tab
     if (activeTab === 'Family') {
       result = result.filter(c => {
-        if (c.identifier === CENTER_ID) return true;
+        if (c.identifier === config.centerId) return true;
         if (c.distance === Infinity || c.relations.length === 0) return false;
         
         for (let i = 0; i < c.relations.length; i++) {
@@ -144,7 +144,7 @@ export default function App() {
       });
     } else if (activeTab === 'Friends') {
       result = result.filter(c => {
-        if (c.identifier === CENTER_ID) return true;
+        if (c.identifier === config.centerId) return true;
         if (c.distance === Infinity || c.relations.length === 0) return false;
         
         const allowedFriendsTypes = ['Friend', 'Partner', 'Spouse'];
@@ -378,6 +378,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.background,
     paddingTop: Platform.OS === 'web' ? 0 : 30,
+    paddingBottom: Platform.OS === 'android' ? 50 : 0,
   },
   container: {
     flex: 1,

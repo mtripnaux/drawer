@@ -46,7 +46,18 @@ export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewP
       
       <View style={[styles.section, { borderBottomColor: theme.border }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>General</Text>
-        
+
+        <Text style={[styles.subtitle, {marginTop: 0, color: theme.textMuted }]}>Center ID (Point of View)</Text>
+        <TextInput
+          style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
+          value={config.centerId}
+          onChangeText={(text) => onUpdate({...config, centerId: text})}
+          placeholder="e.g. fb98bd92-1daa-4249-be13-96e547918761"
+          placeholderTextColor={theme.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
         <Text style={[styles.subtitle, {marginTop: 0, color: theme.textMuted }]}>Name Display Pattern</Text>
         <TextInput
           style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
@@ -90,7 +101,7 @@ export const SettingsView = ({ config, onUpdate, onClose, theme }: SettingsViewP
       </View>
       
 
-      <View style={[styles.section, { borderBottomColor: theme.border }]}>
+      <View style={[styles.section, { borderBottomWidth: 0 }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance & Visibility</Text>
         
         <OptionRow

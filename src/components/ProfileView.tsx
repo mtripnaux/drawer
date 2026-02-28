@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
 import { ChevronLeft, Phone, Calendar, MessageSquare, Users, Instagram, Twitter, Facebook, Linkedin, Mail } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
-import { CENTER_ID, UserConfig } from '../constants/config';
+import { UserConfig } from '../constants/config';
 import { ContactWithDistance, Group, Contact } from '../types';
 import { getPhoneNumber, formatDate, getInitials } from '../utils/format';
 import { buildGraph, RELATION_WEIGHTS } from '../utils/graph';
@@ -306,7 +306,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                 <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
                 {(contact.relations.length > 0) && <View style={[styles.stepLine, { backgroundColor: theme.border }]} />}
                 <Text style={[styles.stepText, { color: theme.text }]}>
-                     Me <Text style={{ color: theme.textMuted }}>({contactMap.get(CENTER_ID) || 'Me'})</Text>
+                     Me <Text style={{ color: theme.textMuted }}>({contactMap.get(config.centerId) || 'Me'})</Text>
                 </Text>
              </View>
 
