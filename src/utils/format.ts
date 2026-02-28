@@ -23,51 +23,11 @@ export const formatNameWithConfig = (identity: Contact['identity'], config: User
   return name;
 };
 
-const PHONE_FORMATS: Record<number, (n: string) => string> = {
-  // North America (NANP): (XXX) XXX-XXXX
-  1:   n => n.length === 10 ? `(${n.slice(0,3)}) ${n.slice(3,6)}-${n.slice(6)}` : n,
-  // France: X XX XX XX XX
-  33:  n => n.replace(/^(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5'),
-  // UK: XXXX XXXXXX or XXXXX XXXXXX
-  44:  n => n.length === 10 ? `${n.slice(0,4)} ${n.slice(4)}` : n.length === 11 ? `${n.slice(0,5)} ${n.slice(5)}` : n,
-  // Germany: XXX XXXXXXX
-  49:  n => n.replace(/^(\d{3,5})(\d+)$/, '$1 $2'),
-  // Belgium: XXX XX XX XX
-  32:  n => n.replace(/^(\d{3})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4'),
-  // Switzerland: XX XXX XX XX
-  41:  n => n.replace(/^(\d{2})(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3 $4'),
-  // Italy: XXX XXXXXXX
-  39:  n => n.replace(/^(\d{3})(\d+)$/, '$1 $2'),
-  // Spain: XXX XXX XXX
-  34:  n => n.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'),
-  // Netherlands: XX XXXXXXX
-  31:  n => n.replace(/^(\d{2})(\d+)$/, '$1 $2'),
-  // Portugal: XXX XXX XXX
-  351: n => n.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'),
-  // Luxembourg: XXX XXX XXX
-  352: n => n.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'),
-  // Austria: XXX XXXXXXX
-  43:  n => n.replace(/^(\d{3})(\d+)$/, '$1 $2'),
-  // Australia: XXXX XXXX
-  61:  n => n.replace(/^(\d{4})(\d{4})$/, '$1 $2'),
-  // Japan: XXX-XXXX-XXXX
-  81:  n => n.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3'),
-  // Brazil: (XX) XXXXX-XXXX
-  55:  n => n.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3'),
-  // India: XXXXX XXXXX
-  91:  n => n.replace(/^(\d{5})(\d{5})$/, '$1 $2'),
-  // China: XXX XXXX XXXX
-  86:  n => n.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3'),
-};
-
 export const getPhoneNumber = (phone: any): string => {
   if (typeof phone === 'string') return phone;
   const raw = `${phone.number}`;
   if (!phone.country_code) return raw;
-  const cc: number = phone.country_code;
-  const formatter = PHONE_FORMATS[cc];
-  const formatted = formatter ? formatter(raw) : raw;
-  return `+${cc} ${formatted}`;
+  return `+${phone.country_code} ${raw}`;
 };
 
 export const getInitials = (first: string, last: string) => {
