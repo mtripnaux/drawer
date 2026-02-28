@@ -37,6 +37,21 @@ export const getInitials = (first: string, last: string) => {
 
 export const formatTwoDigits = (num: number) => num.toString().padStart(2, '0');
 
+export const computeAge = (birthDate: { year?: number | null; month?: number | null; day?: number | null } | null | undefined): { age: number; approximate: boolean } | null => {
+  if (!birthDate || !birthDate.year) return null;
+  const approximate = !birthDate.month || !birthDate.day;
+  const today = new Date();
+  const birth = new Date(
+    birthDate.year,
+    (birthDate.month ?? 1) - 1,
+    birthDate.day ?? 1
+  );
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age >= 0 ? { age, approximate } : null;
+};
+
 export const formatDate = (date: any, config: UserConfig) => {
   if (!date) return '';
 

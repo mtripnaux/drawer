@@ -4,7 +4,7 @@ import { ChevronLeft, Phone, Calendar, MessageSquare, Users, Instagram, Twitter,
 import { THEME } from '../constants/theme';
 import { UserConfig } from '../constants/config';
 import { ContactWithDistance, Group, Contact } from '../types';
-import { getPhoneNumber, formatDate, getInitials } from '../utils/format';
+import { getPhoneNumber, formatDate, getInitials, computeAge } from '../utils/format';
 import { buildGraph, RELATION_WEIGHTS } from '../utils/graph';
 
 type ThemeType = typeof THEME;
@@ -284,6 +284,13 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                  <Text style={[styles.infoLabel, { color: theme.textMuted }]}>Born</Text>
                  <Text style={[styles.infoValue, { color: theme.text }]}>
                    {formatDate(contact.identity.birth_date, config)}
+                   {(() => {
+                     const result = computeAge(contact.identity.birth_date);
+                     if (!result) return null;
+                     const label = contact.identity.is_alive === false ? 'at death' : 'years old';
+                     const prefix = result.approximate ? 'about ' : '';
+                     return <Text style={{ color: theme.textMuted }}>{' '}({prefix}{result.age} {label})</Text>;
+                   })()}
                  </Text>
                </View>
              </View>
