@@ -306,6 +306,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
         )}
 
         {/* Relationship Path */}
+        {contact.distance !== Infinity && contact.distance !== 0 && (
         <View style={[styles.section, { borderBottomColor: theme.border }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Relationship Path</Text>
           <View style={styles.pathContainer}>
@@ -352,6 +353,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
              )}
           </View>
         </View>
+        )}
 
         {/* Related Contacts */}
         <View style={[styles.section, { borderBottomWidth: 0 }]}>
