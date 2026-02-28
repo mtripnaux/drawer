@@ -240,7 +240,11 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Contact Informations</Text>
 
           {hasPhone && contact.phones?.map((phone, index) => (
-            <View key={`phone-${index}`} style={styles.infoRow}>
+            <TouchableOpacity
+              key={`phone-${index}`}
+              style={styles.infoRow}
+              onPress={() => Linking.openURL(`tel:${getPhoneNumber(phone).replace(/\s/g, '')}`)}
+            >
               <View style={styles.infoIconContainer}>
                 <Phone size={20} color={theme.textMuted} />
               </View>
@@ -252,7 +256,7 @@ export const ProfileView = ({ contact, onClose, contactMap, formatName, groups, 
                 </Text>
                 <Text style={[styles.infoValue, { color: theme.text }]}>{getPhoneNumber(phone)}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
 
           {hasEmail && contact.emails?.map((email, index) => (
