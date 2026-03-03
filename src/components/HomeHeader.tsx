@@ -22,15 +22,15 @@ export const HomeHeader = ({ count, onSettings, onToggleSort, theme }: HomeHeade
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          onPress={onSettings}
-        >
-          <Settings size={20} color={theme.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
           onPress={onToggleSort}
         >
           <ArrowUpDown size={20} color={theme.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={onSettings}
+        >
+          <Settings size={20} color={theme.text} />
         </TouchableOpacity>
       </View>
     </View>

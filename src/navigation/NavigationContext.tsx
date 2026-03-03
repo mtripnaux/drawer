@@ -8,6 +8,7 @@ interface NavigationContextType {
   push: (route: Route) => void;
   pop: () => void;
   replace: (route: Route) => void;
+  resetTo: (route: Route) => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | null>(null);
@@ -27,6 +28,10 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
     setStack(prev => [...prev.slice(0, -1), route]);
   }, []);
 
+  const resetTo = useCallback((route: Route) => {
+    setStack([route]);
+  }, []);
+
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (stack.length > 1) {
@@ -39,7 +44,7 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
   }, [stack.length, pop]);
 
   return (
-    <NavigationContext.Provider value={{ currentRoute: stack[stack.length - 1], stack, push, pop, replace }}>
+    <NavigationContext.Provider value={{ currentRoute: stack[stack.length - 1], stack, push, pop, replace, resetTo }}>
       {children}
     </NavigationContext.Provider>
   );

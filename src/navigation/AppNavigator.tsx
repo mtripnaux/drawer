@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, ActivityIndicator, SafeAreaView, Platform, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNavigation } from './NavigationContext';
 import { useConfig } from '../contexts/ConfigContext';
@@ -10,11 +11,14 @@ import { LIGHT_THEME, DARK_THEME } from '../constants/theme';
 import { ContactListScreen } from '../screens/ContactListScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { BirthdaysScreen } from '../screens/BirthdaysScreen';
+import { BottomTabBar } from '../components/BottomTabBar';
 
 export const AppNavigator = () => {
   const { currentRoute } = useNavigation();
   const { config } = useConfig();
   const { loading } = useContacts();
+  const insets = useSafeAreaInsets();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
 
@@ -27,22 +31,27 @@ export const AppNavigator = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      {currentRoute.name === 'ContactList' && <ContactListScreen />}
-      {currentRoute.name === 'Profile' && (
-        <ProfileScreen contact={currentRoute.params.contact} />
-      )}
-      {currentRoute.name === 'Settings' && <SettingsScreen />}
+    <View style={[styles.safeArea, { backgroundColor: theme.background, paddingTop: Platform.OS === 'web' ? 0 : insets.top }]}>
+      <View style={styles.content}>
+        {currentRoute.name === 'ContactList' && <ContactListScreen />}
+        {currentRoute.name === 'Birthdays' && <BirthdaysScreen />}
+        {currentRoute.name === 'Profile' && (
+          <ProfileScreen contact={currentRoute.params.contact} />
+        )}
+        {currentRoute.name === 'Settings' && <SettingsScreen />}
+      </View>
+      <BottomTabBar theme={theme} />
       <StatusBar style={config.darkTheme ? 'light' : 'dark'} />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'web' ? 0 : 30,
-    paddingBottom: Platform.OS === 'android' ? 50 : 0,
+  },
+  content: {
+    flex: 1,
   },
   center: {
     flex: 1,

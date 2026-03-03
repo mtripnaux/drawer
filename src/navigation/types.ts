@@ -2,6 +2,7 @@ import { ContactWithDistance } from '../types';
 
 export type RouteParams = {
   ContactList: undefined;
+  Birthdays: undefined;
   Profile: { contact: ContactWithDistance };
   Settings: undefined;
 };

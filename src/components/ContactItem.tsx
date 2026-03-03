@@ -40,7 +40,7 @@ export const ContactItem = ({ item, onSelect, formatName, theme }: ContactItemPr
   };
 
   return (
-    <View style={[styles.cardContainer, { borderBottomColor: theme.border }]}>
+    <View style={styles.cardContainer}>
       <TouchableOpacity style={[styles.card, { backgroundColor: theme.background }]} onPress={() => onSelect(item)}>
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: item.identity.gender === 'male' ? '#eff6ff' : '#fdf2f8' }]}>
@@ -57,14 +57,16 @@ export const ContactItem = ({ item, onSelect, formatName, theme }: ContactItemPr
           </Text>
         </View>
       </TouchableOpacity>
+      <View style={[styles.separator, { backgroundColor: theme.border }]} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: THEME.border,
+  },
+  separator: {
+    height: 1,
   },
   card: {
     flexDirection: 'row',
