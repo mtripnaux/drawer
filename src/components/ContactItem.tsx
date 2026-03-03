@@ -57,16 +57,12 @@ export const ContactItem = ({ item, onSelect, formatName, theme }: ContactItemPr
           </Text>
         </View>
       </TouchableOpacity>
-      <View style={[styles.separator, { backgroundColor: theme.border }]} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   cardContainer: {
-  },
-  separator: {
-    height: 1,
   },
   card: {
     flexDirection: 'row',

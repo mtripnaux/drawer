@@ -68,6 +68,7 @@ export const ContactListScreen = () => {
             theme={theme}
           />
         )}
+        ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: theme.border }} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={true}
         persistentScrollbar={true}

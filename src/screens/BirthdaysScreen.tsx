@@ -105,7 +105,6 @@ export const BirthdaysScreen = () => {
             </Text>
           </View>
         </TouchableOpacity>
-        <View style={[styles.separator, { backgroundColor: theme.border }]} />
       </View>
     );
   };
@@ -146,6 +145,7 @@ export const BirthdaysScreen = () => {
           data={birthdayContacts}
           keyExtractor={item => item.identifier}
           renderItem={renderItem}
+          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: theme.border }} />}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={true}
           indicatorStyle='default'
@@ -193,9 +193,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   itemContainer: {
-  },
-  separator: {
-    height: 1,
   },
   item: {
     flexDirection: 'row',
