@@ -43,7 +43,7 @@ export const SettingsProfileSection = ({ config, onUpdate, theme }: SettingsProf
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Profile Actions</Text>
       <Text style={[styles.hint, { color: theme.textMuted }]}>
-        Reorder and select — up to 4 enabled are shown on profile
+        Select and order up to 4 shown on profile
       </Text>
 
       {actions.map((action, index) => {

@@ -44,7 +44,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
       placeholderTextColor={theme.textMuted}
     />
 
-    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Sort By</Text>
+    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Contacts Sorted By</Text>
     <View style={[styles.row, { marginTop: 10, gap: 10 }]}>
       {(['PROXIMITY', 'ALPHABETICAL'] as const).map((option) => (
         <TouchableOpacity

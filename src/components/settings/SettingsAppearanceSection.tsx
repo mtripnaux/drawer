@@ -25,7 +25,7 @@ const Toggle = ({ value, theme }: { value: boolean; theme: ThemeType }) => (
 );
 
 export const SettingsAppearanceSection = ({ config, onUpdate, theme }: SettingsAppearanceSectionProps) => (
-  <View style={[styles.section, { borderBottomWidth: 0 }]}>
+  <View style={[styles.section, { borderBottomColor: theme.border }]}>
     <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance & Visibility</Text>
 
     <OptionRow
