@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   profileContent: {
-    paddingBottom: 0,
+    paddingBottom: 40,
   },
 });
 
