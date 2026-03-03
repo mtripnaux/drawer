@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { useConfig } from '../contexts/ConfigContext';
 import { useNavigation } from '../navigation/NavigationContext';
 import { LIGHT_THEME, DARK_THEME, THEME } from '../constants/theme';
 import { SettingsGeneralSection } from '../components/settings/SettingsGeneralSection';
 import { SettingsAppearanceSection } from '../components/settings/SettingsAppearanceSection';
+import { SettingsProfileSection } from '../components/settings/SettingsProfileSection';
 
 export const SettingsScreen = () => {
   const { config, setConfig } = useConfig();
@@ -26,8 +27,11 @@ export const SettingsScreen = () => {
         <View style={{ width: 44 }} />
       </View>
 
-      <SettingsGeneralSection config={config} onUpdate={setConfig} theme={theme} />
-      <SettingsAppearanceSection config={config} onUpdate={setConfig} theme={theme} />
+      <ScrollView>
+        <SettingsGeneralSection config={config} onUpdate={setConfig} theme={theme} />
+        <SettingsProfileSection config={config} onUpdate={setConfig} theme={theme} />
+        <SettingsAppearanceSection config={config} onUpdate={setConfig} theme={theme} />
+      </ScrollView>
     </View>
   );
 };

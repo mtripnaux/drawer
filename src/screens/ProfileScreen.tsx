@@ -101,6 +101,7 @@ export const ProfileScreen = ({ contact }: ProfileScreenProps) => {
           facebook={facebook}
           linkedin={linkedin}
           onSocial={handleSocial}
+          profileActions={config.profileActions}
           theme={theme}
         />
 

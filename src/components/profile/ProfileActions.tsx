@@ -2,8 +2,27 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Phone, MessageSquare, Instagram, Twitter, Facebook, Linkedin } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
+import { UserConfig, ProfileActionId } from '../../constants/config';
 
 type ThemeType = typeof THEME;
+
+const ACTION_ICONS: Record<ProfileActionId, React.ComponentType<{ size: number; color: string }>> = {
+  phone: Phone,
+  message: MessageSquare,
+  instagram: Instagram,
+  facebook: Facebook,
+  linkedin: Linkedin,
+  twitter: Twitter,
+};
+
+const ACTION_LABELS: Record<ProfileActionId, string> = {
+  phone: 'Call',
+  message: 'Message',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  twitter: 'Twitter',
+};
 
 interface ProfileActionsProps {
   hasPhone: boolean;
@@ -14,6 +33,7 @@ interface ProfileActionsProps {
   facebook?: string;
   linkedin?: string;
   onSocial: (network: string, username: string) => void;
+  profileActions: UserConfig['profileActions'];
   theme: ThemeType;
 }
 
@@ -51,17 +71,47 @@ export const ProfileActions = ({
   facebook,
   linkedin,
   onSocial,
+  profileActions,
   theme,
-}: ProfileActionsProps) => (
-  <View style={[styles.actionButtons, { borderBottomColor: theme.border }]}>
-    <ActionButton label="Call" icon={(c) => <Phone size={24} color={c} />} active={hasPhone} onPress={onCall} theme={theme} />
-    <ActionButton label="Message" icon={(c) => <MessageSquare size={24} color={c} />} active={hasPhone} onPress={onSMS} theme={theme} />
-    <ActionButton label="Instagram" icon={(c) => <Instagram size={24} color={c} />} active={!!instagram} onPress={instagram ? () => onSocial('instagram', instagram) : undefined} theme={theme} />
-    <ActionButton label="Facebook" icon={(c) => <Facebook size={24} color={c} />} active={!!facebook} onPress={facebook ? () => onSocial('facebook', facebook) : undefined} theme={theme} />
-    <ActionButton label="LinkedIn" icon={(c) => <Linkedin size={24} color={c} />} active={!!linkedin} onPress={linkedin ? () => onSocial('linkedin', linkedin) : undefined} theme={theme} />
-    <ActionButton label="Twitter" icon={(c) => <Twitter size={24} color={c} />} active={!!twitter} onPress={twitter ? () => onSocial('twitter', twitter) : undefined} theme={theme} />
-  </View>
-);
+}: ProfileActionsProps) => {
+  const socials: Partial<Record<ProfileActionId, string>> = { instagram, facebook, linkedin, twitter };
+
+  const isAvailable = (id: ProfileActionId) => {
+    if (id === 'phone' || id === 'message') return hasPhone;
+    return !!socials[id];
+  };
+
+  const getOnPress = (id: ProfileActionId) => {
+    if (id === 'phone') return onCall;
+    if (id === 'message') return onSMS;
+    const username = socials[id];
+    return username ? () => onSocial(id, username) : undefined;
+  };
+
+  const visibleActions = profileActions
+    .filter(n => n.enabled && isAvailable(n.id))
+    .slice(0, 4);
+
+  if (visibleActions.length === 0) return null;
+
+  return (
+    <View style={[styles.actionButtons, { borderBottomColor: theme.border }]}>
+      {visibleActions.map(n => {
+        const Icon = ACTION_ICONS[n.id];
+        return (
+          <ActionButton
+            key={n.id}
+            label={ACTION_LABELS[n.id]}
+            icon={(c) => <Icon size={24} color={c} />}
+            active={true}
+            onPress={getOnPress(n.id)}
+            theme={theme}
+          />
+        );
+      })}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   actionButtons: {
