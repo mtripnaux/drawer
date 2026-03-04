@@ -55,16 +55,14 @@ export const TabsBar = ({ tabs, activeTab, onSelect, theme }: TabsBarProps) => {
         locations={[0.3, 0.43]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={styles.fadeLeft}
-        pointerEvents="none"
+        style={[styles.fadeLeft, { pointerEvents: 'none' }]}
       />
       <LinearGradient
         colors={['transparent', theme.background]}
         locations={[0.56, 0.69]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={styles.fadeRight}
-        pointerEvents="none"
+        style={[styles.fadeRight, { pointerEvents: 'none' }]}
       />
     </View>
   );

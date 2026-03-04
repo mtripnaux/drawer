@@ -6,16 +6,16 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Switch,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { ChevronLeft, Plus, X, Check } from 'lucide-react-native';
+import { OptionRow } from '../components/settings/OptionRow';
 import { useConfig } from '../contexts/ConfigContext';
 import { useContacts } from '../contexts/ContactsContext';
 import { useNavigation } from '../navigation/NavigationContext';
 import { LIGHT_THEME, DARK_THEME } from '../constants/theme';
-import { Contact, ContactWithDistance } from '../types';
+import { Contact, ContactWithDistance, Relation, Group } from '../types';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +34,12 @@ type Theme = typeof LIGHT_THEME;
 interface PhoneItem  { label: string; country_code: string; number: string }
 interface EmailItem  { label: string; address: string }
 interface SocialItem { network: string; username: string }
+interface LinkItem   { target: string; relation: string; search: string }
+
+const RELATION_TYPES: Relation[] = [
+  'Friend', 'Sibling', 'Spouse', 'Partner', 'Parent', 'Child',
+  'Boss', 'Employee', 'Colleague', 'Half-Sibling', 'Ex',
+];
 
 // ─── screen ───────────────────────────────────────────────────────────────────
 
@@ -43,10 +49,15 @@ interface EditContactScreenProps {
 
 export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   const { config } = useConfig();
-  const { saveContact } = useContacts();
+  const { saveContact, contacts, groups, contactMap, formatName } = useContacts();
   const { pop } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
+  const flatGroups = useMemo(() => {
+    const flatten = (gs: Group[]): Group[] =>
+      gs.flatMap(g => [g, ...(g.subgroups ? flatten(g.subgroups) : [])]);
+    return flatten(groups);
+  }, [groups]);
   const isNew = !contact;
 
   // ── identity ──────────────────────────────────────────────────────────────
@@ -63,6 +74,9 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   });
 
   const [isAlive, setIsAlive] = useState(contact?.identity.is_alive !== false);
+
+  // ── validation errors ─────────────────────────────────────────────────────
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; gender?: string }>({});
 
   // ── birth date ────────────────────────────────────────────────────────────
   const [birthYear,  setBirthYear]  = useState(contact?.identity.birth_date?.year?.toString()  ?? '');
@@ -83,16 +97,34 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   const [socials, setSocials] = useState<SocialItem[]>(
     contact?.socials?.map(s => ({ network: s.network, username: s.username })) ?? []
   );
+  const [links, setLinks] = useState<LinkItem[]>(
+    contact?.links?.map(l => ({
+      target: l.target,
+      relation: l.relation,
+      search: contactMap.get(l.target) ?? '',
+    })) ?? []
+  );
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(contact?.groups ?? []);
 
   // ── save ──────────────────────────────────────────────────────────────────
   const handleSave = () => {
+    const newErrors: typeof errors = {};
+    if (!firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!lastName.trim())  newErrors.lastName  = 'Last name is required';
+    if (!gender)           newErrors.gender    = 'Gender is required';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+
     const parsedYear  = birthYear  ? parseInt(birthYear,  10) : null;
     const parsedMonth = birthMonth ? parseInt(birthMonth, 10) : null;
     const parsedDay   = birthDay   ? parseInt(birthDay,   10) : null;
     const hasBirthDate = parsedYear !== null || parsedMonth !== null || parsedDay !== null;
 
     const updated: Contact = {
-      identifier: contact?.identifier ?? generateUUID(),
+      identifier: contact?.identifier ?? '',
       identity: {
         first_name:        firstName.trim()   || null,
         last_name:         lastName.trim()    || null,
@@ -130,8 +162,11 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
             .filter(s => s.network && s.username)
             .map(s => ({ network: s.network.toLowerCase(), username: s.username }))
         : null,
-      links:  contact?.links  ?? null,
-      groups: contact?.groups ?? null,
+      links: links.filter(l => l.target && l.relation).map(l => ({
+        target: l.target,
+        relation: l.relation as Relation,
+      })),
+      groups: selectedGroups.length > 0 ? selectedGroups : null,
     };
 
     saveContact(updated);
@@ -146,6 +181,8 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
 
   const toggleGender = (g: 'male' | 'female' | 'non-binary') =>
     setGender(prev => (prev === g ? null : g));
+
+  type ErrorKey = keyof typeof errors;
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -179,19 +216,21 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
           <View style={[styles.section, { borderBottomColor: theme.border }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Identity</Text>
 
-            {([
-              { label: 'First name',   value: firstName,   set: setFirstName                       },
-              { label: 'Last name',    value: lastName,    set: setLastName                        },
-              { label: 'Middle name',  value: middleName,  set: setMiddleName                      },
-              { label: 'Title',        value: title,       set: setTitle,       ph: 'Dr, Mr, Mrs…' },
-              { label: 'Post-nominal', value: postNominal, set: setPostNominal, ph: 'PhD, MD…'     },
-            ] as const).map(({ label, value, set, ph }: any) => (
+            {([  
+              { label: 'First name',   value: firstName,   set: setFirstName,                       errorKey: 'firstName' as ErrorKey | null },
+              { label: 'Last name',    value: lastName,    set: setLastName,                        errorKey: 'lastName'  as ErrorKey | null },
+              { label: 'Middle name',  value: middleName,  set: setMiddleName,                      errorKey: null as ErrorKey | null },
+              { label: 'Title',        value: title,       set: setTitle,       ph: 'Dr, Mr, Mrs…', errorKey: null as ErrorKey | null },
+              { label: 'Post-nominal', value: postNominal, set: setPostNominal, ph: 'PhD, MD…',     errorKey: null as ErrorKey | null },
+            ]).map(({ label, value, set, ph, errorKey }) => (
               <View key={label}>
-                <Text style={[styles.fieldLabel, { color: theme.textMuted }]}>{label}</Text>
+                <Text style={[styles.fieldLabel, { color: errorKey && errors[errorKey] ? theme.danger : theme.textMuted }]}>
+                  {label}{errorKey && errors[errorKey] ? ` — ${errors[errorKey]}` : ''}
+                </Text>
                 <TextInput
-                  style={inputStyle}
+                  style={[inputStyle, errorKey && errors[errorKey] ? { borderColor: theme.danger } : null]}
                   value={value}
-                  onChangeText={set}
+                  onChangeText={(v: string) => { set(v); if (errorKey) setErrors(e => ({ ...e, [errorKey]: undefined })); }}
                   placeholder={ph ?? label}
                   placeholderTextColor={theme.textMuted}
                 />
@@ -201,7 +240,9 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
 
           {/* ── Gender ── */}
           <View style={[styles.section, { borderBottomColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Gender</Text>
+            <Text style={[styles.sectionTitle, { color: errors.gender ? theme.danger : theme.text }]}>
+              Gender{errors.gender ? ` — ${errors.gender}` : ''}
+            </Text>
             <View style={styles.chipRow}>
               {(['male', 'female', 'non-binary'] as const).map(g => (
                 <TouchableOpacity
@@ -253,18 +294,168 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
           {/* ── Status ── */}
           <View style={[styles.section, { borderBottomColor: theme.border }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Status</Text>
-            <TouchableOpacity
-              style={styles.optionRow}
+            <OptionRow
               onPress={() => setIsAlive(v => !v)}
-              activeOpacity={0.7}
+              label="This person is alive"
+              textColor={theme.text}
             >
-              <Text style={[styles.optionText, { color: theme.text }]}>Is alive</Text>
-              <Switch
-                value={isAlive}
-                onValueChange={setIsAlive}
-                trackColor={{ false: theme.border, true: theme.primary }}
-                thumbColor={theme.primaryForeground}
-              />
+              <View style={[styles.toggle, { backgroundColor: isAlive ? theme.primary : theme.border }]}>
+                <View
+                  style={[
+                    styles.toggleKnob,
+                    isAlive ? { backgroundColor: theme.primaryForeground } : {},
+                    isAlive && styles.toggleKnobActive,
+                  ]}
+                />
+              </View>
+            </OptionRow>
+          </View>
+
+          {/* ── Groups ── */}
+          <View style={[styles.section, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups</Text>
+            {flatGroups.length === 0 ? (
+              <Text style={[styles.emptyNote, { color: theme.textMuted }]}>No groups available</Text>
+            ) : (
+              <View style={styles.chipRow}>
+                {flatGroups.map(g => {
+                  const active = selectedGroups.includes(g.identifier);
+                  return (
+                    <TouchableOpacity
+                      key={g.identifier}
+                      onPress={() =>
+                        setSelectedGroups(prev =>
+                          active ? prev.filter(id => id !== g.identifier) : [...prev, g.identifier]
+                        )
+                      }
+                      style={[
+                        styles.chip,
+                        active
+                          ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                          : { backgroundColor: theme.surface, borderColor: theme.border },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: active ? theme.primaryForeground : theme.text }]}>
+                        {g.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {/* ── Relations ── */}
+          <View style={[styles.section, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Relations</Text>
+            {links.map((lk, i) => {
+              const searchResults =
+                lk.search.trim().length >= 1 && !lk.target
+                  ? contacts
+                      .filter(
+                        c =>
+                          c.identifier !== contact?.identifier &&
+                          formatName(c.identity)
+                            .toLowerCase()
+                            .includes(lk.search.toLowerCase().trim())
+                      )
+                      .slice(0, 5)
+                  : [];
+              return (
+                <View
+                  key={i}
+                  style={[
+                    styles.entryRow,
+                    styles.linkRow,
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                  ]}
+                >
+                  {/* Contact selector */}
+                  <View style={styles.linkContactRow}>
+                    <TextInput
+                      style={[styles.entryMain, { color: theme.text, flex: 1 }]}
+                      value={lk.search}
+                      onChangeText={v =>
+                        setLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, search: v, target: '' } : x))
+                        )
+                      }
+                      placeholder="Search contact…"
+                      placeholderTextColor={theme.textMuted}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setLinks(ls => ls.filter((_, j) => j !== i))}
+                      style={styles.deleteBtn}
+                    >
+                      <X size={16} color={theme.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Search results */}
+                  {searchResults.length > 0 && (
+                    <View style={[styles.searchResults, { borderColor: theme.border }]}>
+                      {searchResults.map(c => (
+                        <TouchableOpacity
+                          key={c.identifier}
+                          onPress={() =>
+                            setLinks(ls =>
+                              ls.map((x, j) =>
+                                j === i
+                                  ? { ...x, target: c.identifier, search: formatName(c.identity) }
+                                  : x
+                              )
+                            )
+                          }
+                          style={[styles.searchResultItem, { borderBottomColor: theme.border }]}
+                        >
+                          <Text style={{ color: theme.text, fontSize: 14 }}>
+                            {formatName(c.identity)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Relation type */}
+                  <Text style={[styles.linkSeparatorText, { color: theme.textMuted }]}>
+                    Relation type
+                  </Text>
+                  <View style={styles.chipRow}>
+                    {RELATION_TYPES.map(rel => (
+                      <TouchableOpacity
+                        key={rel}
+                        onPress={() =>
+                          setLinks(ls =>
+                            ls.map((x, j) => (j === i ? { ...x, relation: rel } : x))
+                          )
+                        }
+                        style={[
+                          styles.smallChip,
+                          lk.relation === rel
+                            ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                            : { backgroundColor: theme.background, borderColor: theme.border },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.smallChipText,
+                            { color: lk.relation === rel ? theme.primaryForeground : theme.text },
+                          ]}
+                        >
+                          {rel}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+            <TouchableOpacity
+              style={styles.addRow}
+              onPress={() => setLinks(ls => [...ls, { target: '', relation: '', search: '' }])}
+            >
+              <Plus size={16} color={theme.textMuted} />
+              <Text style={[styles.addLabel, { color: theme.textMuted }]}>Add relation</Text>
             </TouchableOpacity>
           </View>
 
@@ -484,15 +675,63 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ── Status — matches OptionRow
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
+  // ── Status toggle — matches SettingsAppearanceSection
+  toggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    padding: 2,
+    justifyContent: 'center',
   },
-  optionText: {
-    fontSize: 16,
+  toggleKnob: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ccc',
+  },
+  toggleKnobActive: {
+    alignSelf: 'flex-end',
+  },
+
+  // ── Groups / Relations
+  emptyNote: {
+    fontSize: 14,
+    fontStyle: 'italic' as const,
+  },
+  smallChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  smallChipText: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+  },
+  searchResults: {
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: 'hidden' as const,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  searchResultItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+  },
+  linkRow: {
+    flexDirection: 'column' as const,
+    alignItems: 'stretch' as const,
+  },
+  linkContactRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+  },
+  linkSeparatorText: {
+    fontSize: 12,
+    marginTop: 10,
+    marginBottom: 4,
   },
 
   // ── Dynamic entry rows — matches SettingsProfileSection row style

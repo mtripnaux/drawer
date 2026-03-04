@@ -76,25 +76,48 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   }, [fetchFromServer]);
 
   const saveContact = useCallback(async (contact: Contact) => {
+    const isNew = !contact.identifier;
+    const url = `${tupper.baseUri}/contacts`;
+
+    const { identifier: _omit, ...contactWithoutId } = contact;
+    const payload = isNew ? contactWithoutId : contact;
+
+    let savedContact = contact;
     try {
-      const response = await fetch(`${tupper.baseUri}/contacts`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${tupper.token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(contact),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText} — ${responseText}`);
+      }
+
+      if (isNew) {
+        try {
+          const returned = JSON.parse(responseText);
+          const serverId: string = returned.identifier ?? returned.id ?? '';
+          if (serverId) {
+            savedContact = { ...contact, identifier: serverId };
+          }
+        } catch {
+          console.warn('[saveContact] could not parse server response as JSON');
+        }
+      }
     } catch (err) {
-      console.error('[useContacts] Failed to save contact:', err);
+      console.error('[saveContact] FAILED:', err);
     }
 
     const updated = [...rawContactsRef.current];
-    const existingIdx = updated.findIndex(c => c.identifier === contact.identifier);
-    if (existingIdx >= 0) updated[existingIdx] = contact;
-    else updated.push(contact);
+    const existingIdx = updated.findIndex(c => c.identifier === savedContact.identifier);
+    if (existingIdx >= 0) updated[existingIdx] = savedContact;
+    else updated.push(savedContact);
     rawContactsRef.current = updated;
 
     computeAndSet(updated, centerId);

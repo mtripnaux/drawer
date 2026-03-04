@@ -8,6 +8,7 @@ export const LIGHT_THEME = {
   primaryForeground: '#fafafa',
   accent: '#f4f4f5',
   accentForeground: '#18181b',
+  danger: '#dc2626',
 };
 
 export const DARK_THEME = {
@@ -20,6 +21,7 @@ export const DARK_THEME = {
   primaryForeground: '#18181b', // zinc-900
   accent: '#27272a',
   accentForeground: '#fafafa',
+  danger: '#f87171',
 };
 
 export const THEME = LIGHT_THEME;

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing } from 'react-native';
+import { Animated, Easing, Platform } from 'react-native';
 
 export const useSpinAnimation = (active: boolean) => {
   const rotation = useRef(new Animated.Value(0)).current;
@@ -13,7 +13,7 @@ export const useSpinAnimation = (active: boolean) => {
           toValue: 1,
           duration: 700,
           easing: Easing.linear,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         })
       );
       animRef.current.start();
