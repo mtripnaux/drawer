@@ -97,7 +97,7 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
           onPress={() => push({ name: 'EditContact', params: { contact: contact } })}
           style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
-          <Pencil size={18} color={theme.text} />
+          <Pencil size={20} color={theme.text} />
         </TouchableOpacity>
       </View>
 

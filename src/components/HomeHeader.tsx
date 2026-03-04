@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Settings, ArrowUpDown } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { Settings, ArrowUpDown, RefreshCw } from 'lucide-react-native';
 import { THEME } from '../constants/theme';
+import { useSpinAnimation } from '../hooks/useSpinAnimation';
 
 type ThemeType = typeof THEME;
 
@@ -9,10 +10,14 @@ interface HomeHeaderProps {
   count: number;
   onSettings: () => void;
   onToggleSort: () => void;
+  onRefetch: () => void;
+  refetching?: boolean;
   theme: ThemeType;
 }
 
-export const HomeHeader = ({ count, onSettings, onToggleSort, theme }: HomeHeaderProps) => {
+export const HomeHeader = ({ count, onSettings, onToggleSort, onRefetch, refetching, theme }: HomeHeaderProps) => {
+  const { rotate } = useSpinAnimation(!!refetching);
+
   return (
     <View style={styles.header}>
       <View>
@@ -20,6 +25,15 @@ export const HomeHeader = ({ count, onSettings, onToggleSort, theme }: HomeHeade
         <Text style={[styles.subtitle, { color: theme.textMuted }]}>{count} connections found</Text>
       </View>
       <View style={styles.actions}>
+        <TouchableOpacity
+          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          onPress={onRefetch}
+          disabled={refetching}
+        >
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <RefreshCw size={20} color={refetching ? theme.textMuted : theme.text} />
+          </Animated.View>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
           onPress={onToggleSort}

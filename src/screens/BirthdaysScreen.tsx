@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { Settings, ArrowUpDown } from 'lucide-react-native';
+import { Settings, ArrowUpDown, RefreshCw, Gift, WifiOff } from 'lucide-react-native';
 import { LIGHT_THEME, DARK_THEME, THEME } from '../constants/theme';
 import { useConfig } from '../contexts/ConfigContext';
 import { useContacts } from '../contexts/ContactsContext';
 import { useNavigation } from '../navigation/NavigationContext';
 import { ContactWithDistance } from '../types';
 import { getInitials } from '../utils/format';
+import { Animated } from 'react-native';
+import { useSpinAnimation } from '../hooks/useSpinAnimation';
 
 const daysUntilNextBirthday = (month: number, day: number): number => {
   const today = new Date();
@@ -34,10 +36,12 @@ type BirthdayContact = ContactWithDistance & {
 
 export const BirthdaysScreen = () => {
   const { config } = useConfig();
-  const { contacts, formatName } = useContacts();
+  const { contacts, loading, refetching, error, formatName, refetch } = useContacts();
   const { push } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
+
+  const { rotate } = useSpinAnimation(loading || refetching);
 
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -121,6 +125,15 @@ export const BirthdaysScreen = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            onPress={refetch}
+            disabled={loading || refetching}
+          >
+            <Animated.View style={{ transform: [{ rotate }] }}>
+              <RefreshCw size={20} color={(loading || refetching) ? theme.textMuted : theme.text} />
+            </Animated.View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
             onPress={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
           >
             <ArrowUpDown size={20} color={theme.text} />
@@ -134,11 +147,17 @@ export const BirthdaysScreen = () => {
         </View>
       </View>
 
+      {error && (
+        <View style={[styles.errorBanner, { backgroundColor: theme.surface, borderColor: '#f87171' }]}>
+          <WifiOff size={14} color='#ef4444' />
+          <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
+        </View>
+      )}
+
       {birthdayContacts.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-            No birthdays found.{'\n'}Add birth dates to your contacts.
-          </Text>
+          <Gift size={48} color={theme.border} />
+          <Text style={[styles.emptyText, { color: theme.textMuted }]}>No birthdays found</Text>
         </View>
       ) : (
         <FlatList
@@ -239,14 +258,24 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   empty: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    justifyContent: 'center',
+    paddingTop: 60,
   },
   emptyText: {
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 22,
+    marginTop: 10,
+    fontSize: 16,
   },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  errorText: { fontSize: 13, flex: 1 },
 });

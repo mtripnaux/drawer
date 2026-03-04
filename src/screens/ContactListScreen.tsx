@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Users, Plus } from 'lucide-react-native';
+import { Users, Plus, WifiOff } from 'lucide-react-native';
 
 import { useConfig } from '../contexts/ConfigContext';
 import { useContacts } from '../contexts/ContactsContext';
@@ -16,7 +16,7 @@ import { ContactItem } from '../components/ContactItem';
 
 export const ContactListScreen = () => {
   const { config } = useConfig();
-  const { contacts, groups, formatName } = useContacts();
+  const { contacts, groups, loading, refetching, error, formatName, refetch } = useContacts();
   const { push } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
@@ -52,8 +52,16 @@ export const ContactListScreen = () => {
         count={filteredContacts.length}
         onSettings={() => push({ name: 'Settings' })}
         onToggleSort={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
+        onRefetch={refetch}
+        refetching={loading || refetching}
         theme={theme}
       />
+      {error && (
+        <View style={[styles.errorBanner, { backgroundColor: theme.surface, borderColor: '#f87171' }]}>
+          <WifiOff size={14} color='#ef4444' />
+          <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
+        </View>
+      )}
       <SearchBar value={searchQuery} onChangeText={setSearchQuery} theme={theme} />
       <TabsBar tabs={tabs} activeTab={activeTab} onSelect={setActiveTab} theme={theme} />
       <FlatList
@@ -98,6 +106,18 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyText: { marginTop: 10, fontSize: 16 },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  errorText: { fontSize: 13, flex: 1 },
   fab: {
     position: 'absolute',
     bottom: 20,

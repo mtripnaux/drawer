@@ -9,16 +9,19 @@ interface ContactsContextType {
   contacts: ContactWithDistance[];
   groups: Group[];
   loading: boolean;
+  refetching: boolean;
+  error: string | null;
   contactMap: Map<string, string>;
   formatName: (identity: Contact['identity']) => string;
   saveContact: (contact: Contact) => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 const ContactsContext = createContext<ContactsContextType | null>(null);
 
 export const ContactsProvider = ({ children }: { children: React.ReactNode }) => {
   const { config } = useConfig();
-  const { contacts, groups, loading, saveContact } = useContactsLoader(config.centerId, {
+  const { contacts, groups, loading, refetching, error, saveContact, refetch } = useContactsLoader(config.centerId, {
     baseUri: config.tupperBaseUri,
     token: config.secretAccessToken,
   });
@@ -35,7 +38,7 @@ export const ContactsProvider = ({ children }: { children: React.ReactNode }) =>
   }, [contacts, formatName]);
 
   return (
-    <ContactsContext.Provider value={{ contacts, groups, loading, contactMap, formatName, saveContact }}>
+    <ContactsContext.Provider value={{ contacts, groups, loading, refetching, error, contactMap, formatName, saveContact, refetch }}>
       {children}
     </ContactsContext.Provider>
   );
