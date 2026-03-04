@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
-import { Users } from 'lucide-react-native';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Users, Plus } from 'lucide-react-native';
 
 import { useConfig } from '../contexts/ConfigContext';
 import { useContacts } from '../contexts/ContactsContext';
@@ -63,7 +63,7 @@ export const ContactListScreen = () => {
         renderItem={({ item }) => (
           <ContactItem
             item={item}
-            onSelect={(contact) => push({ name: 'Profile', params: { contact } })}
+            onSelect={(contact) => push({ name: 'Profile', params: { contactId: contact.identifier } })}
             formatName={formatName}
             theme={theme}
           />
@@ -82,6 +82,13 @@ export const ContactListScreen = () => {
           </View>
         }
       />
+      {/* FAB — create new contact */}
+      <TouchableOpacity
+        onPress={() => push({ name: 'EditContact', params: {} })}
+        style={[styles.fab, { backgroundColor: theme.primary }]}
+      >
+        <Plus size={22} color={theme.primaryForeground} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -91,4 +98,19 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyText: { marginTop: 10, fontSize: 16 },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
 });

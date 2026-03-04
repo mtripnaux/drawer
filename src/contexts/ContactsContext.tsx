@@ -11,13 +11,17 @@ interface ContactsContextType {
   loading: boolean;
   contactMap: Map<string, string>;
   formatName: (identity: Contact['identity']) => string;
+  saveContact: (contact: Contact) => Promise<void>;
 }
 
 const ContactsContext = createContext<ContactsContextType | null>(null);
 
 export const ContactsProvider = ({ children }: { children: React.ReactNode }) => {
   const { config } = useConfig();
-  const { contacts, groups, loading } = useContactsLoader(config.centerId);
+  const { contacts, groups, loading, saveContact } = useContactsLoader(config.centerId, {
+    baseUri: config.tupperBaseUri,
+    token: config.secretAccessToken,
+  });
 
   const formatName = useCallback(
     (identity: Contact['identity']) => formatNameWithConfig(identity, config),
@@ -31,7 +35,7 @@ export const ContactsProvider = ({ children }: { children: React.ReactNode }) =>
   }, [contacts, formatName]);
 
   return (
-    <ContactsContext.Provider value={{ contacts, groups, loading, contactMap, formatName }}>
+    <ContactsContext.Provider value={{ contacts, groups, loading, contactMap, formatName, saveContact }}>
       {children}
     </ContactsContext.Provider>
   );

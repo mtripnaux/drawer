@@ -69,7 +69,7 @@ export const BirthdaysScreen = () => {
       <View style={styles.itemContainer}>
         <TouchableOpacity
           style={styles.item}
-          onPress={() => push({ name: 'Profile', params: { contact: item } })}
+          onPress={() => push({ name: 'Profile', params: { contactId: item.identifier } })}
         >
           <View style={[styles.avatar, { backgroundColor: colors.bg }]}>
             <Text style={[styles.avatarText, { color: colors.text }]}>

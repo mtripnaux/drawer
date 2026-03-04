@@ -3,8 +3,9 @@ import { ContactWithDistance } from '../types';
 export type RouteParams = {
   ContactList: undefined;
   Birthdays: undefined;
-  Profile: { contact: ContactWithDistance };
+  Profile: { contactId: string };
   Settings: undefined;
+  EditContact: { contact?: ContactWithDistance };
 };
 
 export type RouteName = keyof RouteParams;

@@ -4,6 +4,8 @@ export type ProfileActionId = 'phone' | 'message' | 'instagram' | 'facebook' | '
 
 export const defaultUserConfig = {
   centerId: CENTER_ID,
+  tupperBaseUri: "http://217.145.72.68:3058",
+  secretAccessToken: "super-secret-token",
   nameDisplayPattern: "TITLE FIRST LAST",
   showDeceasedPeople: false,
   hideContactsWithoutPhone: false,

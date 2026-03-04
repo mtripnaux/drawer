@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { UserConfig } from '../../constants/config';
@@ -11,15 +11,53 @@ interface SettingsGeneralSectionProps {
   theme: ThemeType;
 }
 
-export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGeneralSectionProps) => (
+export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGeneralSectionProps) => {
+  // Local draft state for fields that trigger a full reload on commit
+  const [tupperBaseUri, setTupperBaseUri] = useState(config.tupperBaseUri);
+  const [secretAccessToken, setSecretAccessToken] = useState(config.secretAccessToken);
+  const [centerId, setCenterId] = useState(config.centerId);
+
+  // Keep drafts in sync if config changes from outside
+  useEffect(() => { setTupperBaseUri(config.tupperBaseUri); }, [config.tupperBaseUri]);
+  useEffect(() => { setSecretAccessToken(config.secretAccessToken); }, [config.secretAccessToken]);
+  useEffect(() => { setCenterId(config.centerId); }, [config.centerId]);
+
+  return (
   <View style={[styles.section, { borderBottomColor: theme.border }]}>
     <Text style={[styles.sectionTitle, { color: theme.text }]}>General</Text>
+
+    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Tupp Server Base URI</Text>
+    <TextInput
+      style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
+      value={tupperBaseUri}
+      onChangeText={setTupperBaseUri}
+      onBlur={() => onUpdate({ ...config, tupperBaseUri })}
+      placeholder="e.g. http://217.145.72.68:3058"
+      placeholderTextColor={theme.textMuted}
+      autoCapitalize="none"
+      autoCorrect={false}
+      keyboardType="url"
+    />
+
+    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Secret Access Token</Text>
+    <TextInput
+      style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
+      value={secretAccessToken}
+      onChangeText={setSecretAccessToken}
+      onBlur={() => onUpdate({ ...config, secretAccessToken })}
+      placeholder="Bearer token"
+      placeholderTextColor={theme.textMuted}
+      autoCapitalize="none"
+      autoCorrect={false}
+      secureTextEntry
+    />
 
     <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Center ID (Point of View)</Text>
     <TextInput
       style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
-      value={config.centerId}
-      onChangeText={(text) => onUpdate({ ...config, centerId: text })}
+      value={centerId}
+      onChangeText={setCenterId}
+      onBlur={() => onUpdate({ ...config, centerId })}
       placeholder="e.g. fb98bd92-1daa-4249-be13-96e547918761"
       placeholderTextColor={theme.textMuted}
       autoCapitalize="none"
@@ -69,8 +107,8 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
       ))}
     </View>
   </View>
-);
-
+  );
+};
 const styles = StyleSheet.create({
   section: {
     padding: 24,

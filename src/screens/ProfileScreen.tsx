@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Linking } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Pencil } from 'lucide-react-native';
 import { useConfig } from '../contexts/ConfigContext';
 import { useContacts } from '../contexts/ContactsContext';
 import { useNavigation } from '../navigation/NavigationContext';
@@ -16,13 +16,20 @@ import { ProfileRelationshipPath } from '../components/profile/ProfileRelationsh
 import { ProfileRelatedContacts, RelatedContact } from '../components/profile/ProfileRelatedContacts';
 
 interface ProfileScreenProps {
-  contact: ContactWithDistance;
+  contactId: string;
 }
 
-export const ProfileScreen = ({ contact }: ProfileScreenProps) => {
+export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
   const { config } = useConfig();
   const { contacts, groups, contactMap, formatName } = useContacts();
   const { pop, push } = useNavigation();
+
+  const contact = useMemo(
+    () => contacts.find(c => c.identifier === contactId),
+    [contacts, contactId]
+  );
+
+  if (!contact) return null;
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
 
@@ -86,7 +93,12 @@ export const ProfileScreen = ({ contact }: ProfileScreenProps) => {
           <ChevronLeft size={20} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { fontSize: 20, color: theme.text }]}>Profile</Text>
-        <View style={{ width: 44 }} />
+        <TouchableOpacity
+          onPress={() => push({ name: 'EditContact', params: { contact: contact } })}
+          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        >
+          <Pencil size={18} color={theme.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.profileContent}>
@@ -114,13 +126,13 @@ export const ProfileScreen = ({ contact }: ProfileScreenProps) => {
           allContacts={contacts}
           contactMap={contactMap}
           config={config}
-          onSelectContact={(c) => push({ name: 'Profile', params: { contact: c } })}
+          onSelectContact={(c) => push({ name: 'Profile', params: { contactId: c.identifier } })}
           theme={theme}
         />
 
         <ProfileRelatedContacts
           relatedContacts={relatedContacts}
-          onSelectContact={(c) => push({ name: 'Profile', params: { contact: c } })}
+          onSelectContact={(c) => push({ name: 'Profile', params: { contactId: c.identifier } })}
           formatName={formatName}
           theme={theme}
         />

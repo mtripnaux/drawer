@@ -12,6 +12,7 @@ import { ContactListScreen } from '../screens/ContactListScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { BirthdaysScreen } from '../screens/BirthdaysScreen';
+import { EditContactScreen } from '../screens/EditContactScreen';
 import { BottomTabBar } from '../components/BottomTabBar';
 
 export const AppNavigator = () => {
@@ -36,9 +37,12 @@ export const AppNavigator = () => {
         {currentRoute.name === 'ContactList' && <ContactListScreen />}
         {currentRoute.name === 'Birthdays' && <BirthdaysScreen />}
         {currentRoute.name === 'Profile' && (
-          <ProfileScreen contact={currentRoute.params.contact} />
+          <ProfileScreen contactId={currentRoute.params.contactId} />
         )}
         {currentRoute.name === 'Settings' && <SettingsScreen />}
+        {currentRoute.name === 'EditContact' && (
+          <EditContactScreen contact={currentRoute.params.contact} />
+        )}
       </View>
       <BottomTabBar theme={theme} />
       <StatusBar style={config.darkTheme ? 'light' : 'dark'} />
