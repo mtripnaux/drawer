@@ -14,6 +14,7 @@ export const formatNameWithConfig = (identity: Contact['identity'], config: User
   
   name = name.replaceAll("()", '');
   name = name.replaceAll(", ,", ', ');
+  name = name.replace(/(?:^|\s+)\.\s*/g, ' ').trim(); // remove lone dots (e.g. ". John" → "John")
   name = name.replace(/\s+/g, ' ').trim();
 
   if(name.endsWith(',')) {
