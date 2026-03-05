@@ -51,9 +51,10 @@ export const BirthdaysScreen = () => {
       .map(c => {
         const { month, day, year } = c.identity.birth_date!;
         const daysUntil = daysUntilNextBirthday(month!, day!);
-        const turnsAge = year
-          ? new Date().getFullYear() + (daysUntil === 0 ? 0 : 1) - year
-          : null;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const bdayThisYear = new Date(today.getFullYear(), month! - 1, day!);
+        const nextBdayYear = bdayThisYear < today ? today.getFullYear() + 1 : today.getFullYear();
+        const turnsAge = year ? nextBdayYear - year : null;
         return { ...c, daysUntil, turnsAge };
       })
       .sort((a, b) => sortOrder === 'asc' ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
