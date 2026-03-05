@@ -24,9 +24,11 @@ export const useFilteredContacts = (
     }
 
     if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
+      const normalize = (s: string) =>
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const normalizedQuery = normalize(searchQuery);
       result = result.filter(c =>
-        formatName(c.identity).toLowerCase().includes(lowerQuery)
+        normalize(formatName(c.identity)).includes(normalizedQuery)
       );
     }
 
