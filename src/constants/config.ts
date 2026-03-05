@@ -9,7 +9,7 @@ export const defaultUserConfig = {
   nameDisplayPattern: "TITLE FIRST LAST",
   showDeceasedPeople: false,
   hideContactsWithoutPhone: false,
-  sortBy: "PROXIMITY", // "PROXIMITY", "ALPHABETICAL"
+  sortBy: "PROXIMITY", // "PROXIMITY", "ALPHABETICAL", "RECENTLY_ADDED"
   dateFormat: "DD/MM/YYYY",
   darkTheme: false,
   profileActions: [

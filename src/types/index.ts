@@ -61,4 +61,5 @@ export interface ContactWithDistance extends Contact {
   distance: number;
   relations: string[];
   path: string[];
+  addedIndex: number;
 }

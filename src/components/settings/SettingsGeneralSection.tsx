@@ -84,7 +84,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
 
     <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Contacts Sorted By</Text>
     <View style={[styles.row, { marginTop: 10, gap: 10 }]}>
-      {(['PROXIMITY', 'ALPHABETICAL'] as const).map((option) => (
+      {(['PROXIMITY', 'ALPHABETICAL', 'RECENTLY_ADDED'] as const).map((option) => (
         <TouchableOpacity
           key={option}
           style={[
@@ -101,7 +101,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
               config.sortBy === option ? { color: theme.primaryForeground } : { color: theme.text },
             ]}
           >
-            {option === 'PROXIMITY' ? 'Proximity' : 'Alphabetical'}
+            {option === 'PROXIMITY' ? 'Proximity' : option === 'ALPHABETICAL' ? 'Alphabetical' : 'Recently Added'}
           </Text>
         </TouchableOpacity>
       ))}

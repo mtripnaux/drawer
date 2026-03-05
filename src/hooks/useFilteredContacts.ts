@@ -88,6 +88,9 @@ export const useFilteredContacts = (
         const nameB = formatName(b.identity);
         return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
+      if (config.sortBy === 'RECENTLY_ADDED') {
+        return sortOrder === 'asc' ? b.addedIndex - a.addedIndex : a.addedIndex - b.addedIndex;
+      }
       const distA = a.distance === Infinity ? Number.MAX_SAFE_INTEGER : a.distance;
       const distB = b.distance === Infinity ? Number.MAX_SAFE_INTEGER : b.distance;
       if (sortOrder === 'asc') {

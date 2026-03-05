@@ -19,13 +19,14 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
 
   const computeAndSet = useCallback((raw: Contact[], cId: string) => {
     const graph = buildGraph(raw);
-    const computed: ContactWithDistance[] = raw.map(c => {
+    const computed: ContactWithDistance[] = raw.map((c, index) => {
       const result = shortestPath(graph, cId, c.identifier);
       return {
         ...c,
         distance: result ? result.distance : Infinity,
         relations: result ? result.relations : [],
         path: result ? result.path : [],
+        addedIndex: index,
       };
     });
     setContacts(computed);
