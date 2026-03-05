@@ -72,8 +72,18 @@ export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInf
               {(() => {
                 const result = computeAge(contact.identity.birth_date);
                 if (!result) return null;
-                const label = contact.identity.is_alive === false ? 'at death' : 'years old';
+                const isDeceased = contact.identity.is_alive === false;
                 const prefix = result.approximate ? 'about ' : '';
+                if (!isDeceased && result.age < 2) {
+                  const bd = contact.identity.birth_date!;
+                  const today = new Date();
+                  const birth = new Date(bd.year!, (bd.month ?? 1) - 1, bd.day ?? 1);
+                  const months = (today.getFullYear() - birth.getFullYear()) * 12
+                    + (today.getMonth() - birth.getMonth())
+                    - (today.getDate() < birth.getDate() ? 1 : 0);
+                  return <Text style={{ color: theme.textMuted }}>{' '}({prefix}{months} months old)</Text>;
+                }
+                const label = isDeceased ? 'at death' : 'years old';
                 return <Text style={{ color: theme.textMuted }}>{' '}({prefix}{result.age} {label})</Text>;
               })()}
             </Text>
