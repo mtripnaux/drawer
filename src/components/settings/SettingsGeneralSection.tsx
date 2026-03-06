@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { User, X } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
 import { UserConfig } from '../../constants/config';
+import { useContacts } from '../../contexts/ContactsContext';
 
 type ThemeType = typeof THEME;
 
@@ -12,15 +14,34 @@ interface SettingsGeneralSectionProps {
 }
 
 export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGeneralSectionProps) => {
+  const { contacts, formatName } = useContacts();
+
   // Local draft state for fields that trigger a full reload on commit
   const [tupperBaseUri, setTupperBaseUri] = useState(config.tupperBaseUri);
   const [secretAccessToken, setSecretAccessToken] = useState(config.secretAccessToken);
-  const [centerId, setCenterId] = useState(config.centerId);
+
+  // Contact search state for Point of View
+  const [centerSearch, setCenterSearch] = useState('');
+  const [centerDropdownActive, setCenterDropdownActive] = useState(false);
+
+  // Resolve initial display name from loaded contacts
+  useEffect(() => {
+    if (config.centerId && contacts.length > 0) {
+      const found = contacts.find(c => c.identifier === config.centerId);
+      if (found) setCenterSearch(formatName(found.identity));
+    }
+  }, [config.centerId, contacts]);
+
+  const centerResults = useMemo(() => {
+    if (!centerDropdownActive || centerSearch.trim().length < 1) return [];
+    return contacts
+      .filter(c => formatName(c.identity).toLowerCase().includes(centerSearch.toLowerCase().trim()))
+      .slice(0, 6);
+  }, [centerDropdownActive, centerSearch, contacts, formatName]);
 
   // Keep drafts in sync if config changes from outside
   useEffect(() => { setTupperBaseUri(config.tupperBaseUri); }, [config.tupperBaseUri]);
   useEffect(() => { setSecretAccessToken(config.secretAccessToken); }, [config.secretAccessToken]);
-  useEffect(() => { setCenterId(config.centerId); }, [config.centerId]);
 
   return (
   <View style={[styles.section, { borderBottomColor: theme.border }]}>
@@ -52,19 +73,56 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
       secureTextEntry
     />
 
-    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Center ID (Point of View)</Text>
-    <TextInput
-      style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
-      value={centerId}
-      onChangeText={setCenterId}
-      onBlur={() => onUpdate({ ...config, centerId })}
-      placeholder="e.g. fb98bd92-1daa-4249-be13-96e547918761"
-      placeholderTextColor={theme.textMuted}
-      autoCapitalize="none"
-      autoCorrect={false}
-    />
+    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Point of View (who you are)</Text>
+    <View style={[styles.searchContainer, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+      <User size={16} color={theme.textMuted} style={styles.searchIcon} />
+      <TextInput
+        style={[styles.searchInput, { color: theme.text }]}
+        value={centerSearch}
+        onChangeText={v => {
+          setCenterSearch(v);
+          setCenterDropdownActive(true);
+          if (!v.trim()) onUpdate({ ...config, centerId: '' });
+        }}
+        onFocus={() => setCenterDropdownActive(true)}
+        placeholder="Search your contact…"
+        placeholderTextColor={theme.textMuted}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      {centerSearch.length > 0 && (
+        <TouchableOpacity
+          onPress={() => {
+            setCenterSearch('');
+            setCenterDropdownActive(false);
+            onUpdate({ ...config, centerId: '' });
+          }}
+          style={styles.clearBtn}
+        >
+          <X size={14} color={theme.textMuted} />
+        </TouchableOpacity>
+      )}
+    </View>
+    {centerResults.length > 0 && (
+      <View style={[styles.dropdown, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        {centerResults.map(c => (
+          <TouchableOpacity
+            key={c.identifier}
+            onPress={() => {
+              const name = formatName(c.identity);
+              setCenterSearch(name);
+              setCenterDropdownActive(false);
+              onUpdate({ ...config, centerId: c.identifier });
+            }}
+            style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+          >
+            <Text style={{ color: theme.text, fontSize: 14 }}>{formatName(c.identity)}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    )}
 
-    <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Name Display Pattern</Text>
+    <Text style={[styles.subtitle, { marginTop: 20, color: theme.textMuted }]}>Name Display Pattern</Text>
     <TextInput
       style={[styles.input, { marginBottom: 20, borderColor: theme.border, color: theme.text, backgroundColor: theme.surface }]}
       value={config.nameDisplayPattern}
@@ -101,7 +159,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
               config.sortBy === option ? { color: theme.primaryForeground } : { color: theme.text },
             ]}
           >
-            {option === 'PROXIMITY' ? 'Proximity' : option === 'ALPHABETICAL' ? 'Alphabetical' : 'Recently Added'}
+            {option === 'PROXIMITY' ? 'Proximity' : option === 'ALPHABETICAL' ? 'Alphabetical' : 'Recently'}
           </Text>
         </TouchableOpacity>
       ))}
@@ -140,6 +198,41 @@ const styles = StyleSheet.create({
       web: { outlineStyle: 'none' },
       default: {},
     }) as any,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    ...Platform.select({
+      web: { outlineStyle: 'none' },
+      default: {},
+    }) as any,
+  },
+  clearBtn: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
   },
   row: {
     flexDirection: 'row',
