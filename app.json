@@ -21,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.mtripnaux.drawer"
+      "package": "com.mtripnaux.drawer",
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/icon.png"
