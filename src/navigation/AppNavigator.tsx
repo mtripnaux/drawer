@@ -24,8 +24,15 @@ export const AppNavigator = () => {
   return (
     <View style={[styles.safeArea, { backgroundColor: theme.background, paddingTop: Platform.OS === 'web' ? 0 : insets.top }]}>
       <View style={styles.content}>
-        {currentRoute.name === 'ContactList' && <ContactListScreen />}
-        {currentRoute.name === 'Birthdays' && <BirthdaysScreen />}
+        {/* Root tab screens — always mounted to preserve scroll, search and filter state */}
+        <View style={{ flex: 1, display: currentRoute.name === 'ContactList' ? 'flex' : 'none' }}>
+          <ContactListScreen />
+        </View>
+        <View style={{ flex: 1, display: currentRoute.name === 'Birthdays' ? 'flex' : 'none' }}>
+          <BirthdaysScreen />
+        </View>
+
+        {/* Detail screens — conditionally rendered */}
         {currentRoute.name === 'Profile' && (
           <ProfileScreen contactId={currentRoute.params.contactId} />
         )}
