@@ -60,6 +60,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   const [refetching, setRefetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const rawContactsRef = useRef<Contact[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const computeAndSet = useCallback((raw: Contact[], cId: string) => {
     const graph = buildGraph(raw);
@@ -78,6 +79,12 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
 
   const doFetch = useCallback(async (silent: boolean) => {
     if (!tupper.baseUri || !tupper.token) return;
+
+    // Cancel any previous in-flight request to avoid stale errors overwriting a clean state
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     if (silent) {
       setRefetching(true);
     } else {
@@ -93,6 +100,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
           Authorization: `Bearer ${tupper.token}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -105,11 +113,16 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
       setGroups(baseGroups);
       computeAndSet(base, centerId);
     } catch (err) {
+      // Ignore errors from requests that were intentionally aborted
+      if (err instanceof Error && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
     } finally {
-      if (silent) setRefetching(false);
-      else setLoading(false);
+      // Skip state updates for requests that were superseded by a newer one
+      if (!controller.signal.aborted) {
+        if (silent) setRefetching(false);
+        else setLoading(false);
+      }
     }
   }, [centerId, tupper.baseUri, tupper.token, computeAndSet]);
 
