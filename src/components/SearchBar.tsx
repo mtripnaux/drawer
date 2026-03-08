@@ -21,6 +21,7 @@ export const SearchBar = ({ value, onChangeText, theme }: SearchBarProps) => {
         placeholderTextColor={theme.textMuted}
         value={value}
         onChangeText={onChangeText}
+        scrollEnabled={false}
       />
     </View>
   );
