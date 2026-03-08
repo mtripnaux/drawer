@@ -46,7 +46,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
 
   return (
   <View style={[styles.section, { borderBottomColor: theme.border }]}>
-    <Text style={[styles.sectionTitle, { color: theme.text }]}>General</Text>
+    <Text style={[styles.sectionTitle, { color: theme.text }]}>General Settings</Text>
 
     <Text style={[styles.subtitle, { marginTop: 0, color: theme.textMuted }]}>Tupp Server Base URI</Text>
     <TextInput
