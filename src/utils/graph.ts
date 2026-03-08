@@ -9,14 +9,14 @@ export const RELATION_WEIGHTS: Record<string, number> = {
   "Sibling": 0.5,
   "Spouse": 0.5,
   "Partner": 0.6,
-  "Friend": 1,
+  "Friend": 0.7,
+  "Half-Sibling": 0.75,
   "Parent": 0.8,
   "Child": 0.8,
+  "Colleague": 1.5,
   "Boss": 2,
   "Employee": 2,
-  "Colleague": 1,
-  "Half-Sibling": 0.75,
-  "Ex": 2
+  "Ex": 3
 };
 
 export function buildGraph(contacts: Contact[]): Map<string, GraphEdge[]> {
