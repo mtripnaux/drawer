@@ -21,7 +21,7 @@ interface ProfileScreenProps {
 
 export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
   const { config } = useConfig();
-  const { contacts, groups, contactMap, formatName } = useContacts();
+  const { contacts, groups, contactMap, formatName, saving } = useContacts();
   const { pop, push } = useNavigation();
 
   const contact = useMemo(
@@ -95,7 +95,8 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
         <Text style={[styles.title, { fontSize: 20, color: theme.text }]}>Profile</Text>
         <TouchableOpacity
           onPress={() => push({ name: 'EditContact', params: { contact: contact } })}
-          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          disabled={saving}
+          style={[styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border, opacity: saving ? 0.4 : 1 }]}
         >
           <Pencil size={20} color={theme.text} />
         </TouchableOpacity>

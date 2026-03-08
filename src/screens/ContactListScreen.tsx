@@ -16,7 +16,7 @@ import { ContactItem } from '../components/ContactItem';
 
 export const ContactListScreen = () => {
   const { config } = useConfig();
-  const { contacts, groups, loading, refetching, error, formatName, refetch } = useContacts();
+  const { contacts, groups, loading, refetching, saving, error, formatName, refetch } = useContacts();
   const { push } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
@@ -93,7 +93,8 @@ export const ContactListScreen = () => {
       {/* FAB — create new contact */}
       <TouchableOpacity
         onPress={() => push({ name: 'EditContact', params: {} })}
-        style={[styles.fab, { backgroundColor: theme.primary }]}
+        disabled={saving}
+        style={[styles.fab, { backgroundColor: theme.primary, opacity: saving ? 0.4 : 1 }]}
       >
         <Plus size={22} color={theme.primaryForeground} />
       </TouchableOpacity>

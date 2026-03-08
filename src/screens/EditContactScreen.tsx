@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,7 +50,7 @@ interface EditContactScreenProps {
 
 export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   const { config } = useConfig();
-  const { saveContact, contacts, groups, contactMap, formatName } = useContacts();
+  const { saveContact, saving, contacts, groups, contactMap, formatName } = useContacts();
   const { pop } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
@@ -108,7 +108,10 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>(contact?.groups ?? []);
 
   // ── save ──────────────────────────────────────────────────────────────────
-  const handleSave = () => {
+  const saveGuardRef = useRef(false);
+
+  const handleSave = async () => {
+    if (saveGuardRef.current) return;
     const newErrors: typeof errors = {};
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim())  newErrors.lastName  = 'Last name is required';
@@ -118,6 +121,7 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
       return;
     }
     setErrors({});
+    saveGuardRef.current = true;
 
     const parsedYear  = birthYear  ? parseInt(birthYear,  10) : null;
     const parsedMonth = birthMonth ? parseInt(birthMonth, 10) : null;
@@ -170,7 +174,7 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
       groups: selectedGroups.length > 0 ? selectedGroups : null,
     };
 
-    saveContact(updated);
+    await saveContact(updated);
     pop();
   };
 
@@ -204,7 +208,8 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
 
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.iconButton, { backgroundColor: theme.primary, borderColor: theme.primary }]}
+          disabled={saving}
+          style={[styles.iconButton, { backgroundColor: theme.primary, borderColor: theme.primary, opacity: saving ? 0.4 : 1 }]}
         >
           <Check size={20} color={theme.primaryForeground} />
         </TouchableOpacity>

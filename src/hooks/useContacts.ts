@@ -58,6 +58,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const rawContactsRef = useRef<Contact[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -134,6 +135,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   }, [fetchFromServer]);
 
   const saveContact = useCallback(async (contact: Contact) => {
+    setSaving(true);
     const isNew = !contact.identifier;
     const url = `${tupper.baseUri}/contacts`;
 
@@ -195,8 +197,12 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
     updated = applyInverseLinks(updated, savedContact.identifier, addedLinks, removedLinks);
 
     rawContactsRef.current = updated;
-    computeAndSet(updated, centerId);
+    // Defer heavy graph recomputation so the JS thread stays free for UI interactions
+    setTimeout(() => {
+      computeAndSet(updated, centerId);
+      setSaving(false);
+    }, 0);
   }, [centerId, tupper.baseUri, tupper.token, computeAndSet]);
 
-  return { contacts, groups, loading, refetching, error, saveContact, refetch };
+  return { contacts, groups, loading, refetching, saving, error, saveContact, refetch };
 };
