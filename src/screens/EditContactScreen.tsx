@@ -35,7 +35,7 @@ type Theme = typeof LIGHT_THEME;
 interface PhoneItem  { label: string; country_code: string; number: string }
 interface EmailItem  { label: string; address: string }
 interface AddressItem { label: string; number: string; street: string; city: string; region: string; post_code: string; country: string }
-interface SocialItem { network: string; username: string }
+interface SocialItem { network: string; username: string; label: string }
 interface LinkItem   { target: string; relation: string; search: string }
 
 const RELATION_TYPES: Relation[] = [
@@ -108,7 +108,7 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
     })) ?? []
   );
   const [socials, setSocials] = useState<SocialItem[]>(
-    contact?.socials?.map(s => ({ network: s.network, username: s.username })) ?? []
+    contact?.socials?.map(s => ({ network: s.network, username: s.username, label: s.label ?? '' })) ?? []
   );
   const [links, setLinks] = useState<LinkItem[]>(
     contact?.links?.map(l => ({
@@ -188,7 +188,7 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
       socials: socials.length > 0
         ? socials
             .filter(s => s.network && s.username)
-            .map(s => ({ network: s.network.toLowerCase(), username: s.username }))
+            .map(s => ({ network: s.network.toLowerCase(), username: s.username, label: s.label || null }))
         : null,
       links: links.filter(l => l.target && l.relation).map(l => ({
         target: l.target,
@@ -647,6 +647,13 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
                       placeholderTextColor={theme.textMuted}
                       autoCapitalize="none"
                     />
+                    <TextInput
+                      style={[styles.entrySubLabel, { color: theme.textMuted }]}
+                      value={sc.label}
+                      onChangeText={v => setSocials(s => s.map((x, j) => j === i ? { ...x, label: v } : x))}
+                      placeholder="label"
+                      placeholderTextColor={theme.border}
+                    />
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => setSocials(s => s.filter((_, j) => j !== i))} style={styles.deleteBtn}>
@@ -657,7 +664,7 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
 
             <TouchableOpacity
               style={styles.addRow}
-              onPress={() => setSocials(s => [...s, { network: '', username: '' }])}
+              onPress={() => setSocials(s => [...s, { network: '', username: '', label: '' }])}
             >
               <Plus size={16} color={theme.textMuted} />
               <Text style={[styles.addLabel, { color: theme.textMuted }]}>Add social network</Text>

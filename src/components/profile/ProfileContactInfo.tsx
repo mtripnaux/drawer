@@ -19,6 +19,8 @@ export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInf
   const hasEmail = !!contact.emails?.length;
   const hasAddress = !!contact.addresses?.length;
 
+  const hasContactInfo = hasPhone || hasEmail || hasAddress || !!contact.identity.birth_date;
+
   const openAddress = (addr: NonNullable<ContactWithDistance['addresses']>[number]) => {
     const parts = [addr.number, addr.street, addr.city, addr.region, addr.post_code, addr.country]
       .filter(Boolean).join(', ');
@@ -29,7 +31,7 @@ export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInf
     Linking.openURL(url);
   };
 
-  if (!hasPhone && !hasEmail && !hasAddress && !contact.identity.birth_date) return null;
+  if (!hasContactInfo) return null;
 
   return (
     <View style={[styles.section, { borderBottomColor: theme.border }]}>

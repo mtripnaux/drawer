@@ -58,7 +58,7 @@ export interface Contact {
   emails?: { label?: string | null; address: string }[] | null;
   address?: Address | null;      // current API — single address
   addresses?: Address[] | null;  // future API — array
-  socials?: { network: string; username: string }[] | null;
+  socials?: { network: string; username: string; label?: string | null }[] | null;
   links: Link[] | null;
   groups?: string[] | null;
 }

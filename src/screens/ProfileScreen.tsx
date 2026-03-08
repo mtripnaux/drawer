@@ -12,6 +12,7 @@ import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ProfileActions } from '../components/profile/ProfileActions';
 import { ProfileContactInfo } from '../components/profile/ProfileContactInfo';
 import { ProfileGroups } from '../components/profile/ProfileGroups';
+import { ProfileNetworks } from '../components/profile/ProfileNetworks';
 import { ProfileRelationshipPath } from '../components/profile/ProfileRelationshipPath';
 import { ProfileRelatedContacts, RelatedContact } from '../components/profile/ProfileRelatedContacts';
 
@@ -119,6 +120,8 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
         />
 
         <ProfileContactInfo contact={contact} config={config} theme={theme} />
+
+        <ProfileNetworks contact={contact} config={config} theme={theme} />
 
         <ProfileGroups contact={contact} groups={groups} onGroupPress={navigateToGroupFilter} theme={theme} />
 

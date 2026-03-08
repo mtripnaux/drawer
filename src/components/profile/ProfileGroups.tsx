@@ -79,7 +79,7 @@ export const ProfileGroups = ({ contact, groups, onGroupPress, theme }: ProfileG
 
   return (
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups</Text>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups and Subgroups</Text>
       <View style={styles.treeContainer}>
         {rootGroups.map((g, i) => (
           <View key={g.identifier} style={i > 0 ? { marginTop: 8 } : undefined}>
