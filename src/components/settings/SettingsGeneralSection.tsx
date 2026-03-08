@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'r
 import { User, X } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
 import { UserConfig } from '../../constants/config';
+import { normalizeSearch } from '../../utils/format';
 import { useContacts } from '../../contexts/ContactsContext';
 
 type ThemeType = typeof THEME;
@@ -35,7 +36,7 @@ export const SettingsGeneralSection = ({ config, onUpdate, theme }: SettingsGene
   const centerResults = useMemo(() => {
     if (!centerDropdownActive || centerSearch.trim().length < 1) return [];
     return contacts
-      .filter(c => formatName(c.identity).toLowerCase().includes(centerSearch.toLowerCase().trim()))
+      .filter(c => normalizeSearch(formatName(c.identity)).includes(normalizeSearch(centerSearch.trim())))
       .slice(0, 6);
   }, [centerDropdownActive, centerSearch, contacts, formatName]);
 

@@ -16,6 +16,7 @@ import { useContacts } from '../contexts/ContactsContext';
 import { useNavigation } from '../navigation/NavigationContext';
 import { LIGHT_THEME, DARK_THEME } from '../constants/theme';
 import { Contact, ContactWithDistance, Relation, Group } from '../types';
+import { normalizeSearch } from '../utils/format';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -355,9 +356,8 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
                       .filter(
                         c =>
                           c.identifier !== contact?.identifier &&
-                          formatName(c.identity)
-                            .toLowerCase()
-                            .includes(lk.search.toLowerCase().trim())
+                          normalizeSearch(formatName(c.identity))
+                            .includes(normalizeSearch(lk.search.trim()))
                       )
                       .slice(0, 5)
                   : [];

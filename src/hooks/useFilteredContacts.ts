@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { ContactWithDistance, Group } from '../types';
 import { UserConfig } from '../constants/config';
 import { Contact } from '../types';
+import { normalizeSearch } from '../utils/format';
 
 export const useFilteredContacts = (
   contacts: ContactWithDistance[],
@@ -24,11 +25,9 @@ export const useFilteredContacts = (
     }
 
     if (searchQuery) {
-      const normalize = (s: string) =>
-        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-      const normalizedQuery = normalize(searchQuery);
+      const normalizedQuery = normalizeSearch(searchQuery);
       result = result.filter(c =>
-        normalize(formatName(c.identity)).includes(normalizedQuery)
+        normalizeSearch(formatName(c.identity)).includes(normalizedQuery)
       );
     }
 

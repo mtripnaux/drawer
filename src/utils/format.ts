@@ -1,6 +1,9 @@
 import { Contact } from '../types';
 import { UserConfig } from '../constants/config';
 
+export const normalizeSearch = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 export const formatNameWithConfig = (identity: Contact['identity'], config: UserConfig) => {
   let name = config.nameDisplayPattern;
   name = name.replace(/BIRTH_FIRST/g, identity.birth_first_name || '');
