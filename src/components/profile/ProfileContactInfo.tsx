@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
-import { Phone, Mail, Calendar } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
+import { Phone, Mail, Calendar, MapPin } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
 import { UserConfig } from '../../constants/config';
 import { ContactWithDistance } from '../../types';
@@ -17,8 +17,19 @@ interface ProfileContactInfoProps {
 export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInfoProps) => {
   const hasPhone = !!contact.phones?.length;
   const hasEmail = !!contact.emails?.length;
+  const hasAddress = !!contact.addresses?.length;
 
-  if (!hasPhone && !hasEmail && !contact.identity.birth_date) return null;
+  const openAddress = (addr: NonNullable<ContactWithDistance['addresses']>[number]) => {
+    const parts = [addr.number, addr.street, addr.city, addr.region, addr.post_code, addr.country]
+      .filter(Boolean).join(', ');
+    const encoded = encodeURIComponent(parts);
+    const url = Platform.OS === 'ios'
+      ? `maps:?q=${encoded}`
+      : `geo:0,0?q=${encoded}`;
+    Linking.openURL(url);
+  };
+
+  if (!hasPhone && !hasEmail && !hasAddress && !contact.identity.birth_date) return null;
 
   return (
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
@@ -45,7 +56,11 @@ export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInf
       ))}
 
       {hasEmail && contact.emails?.map((email, index) => (
-        <View key={`email-${index}`} style={styles.infoRow}>
+        <TouchableOpacity
+          key={`email-${index}`}
+          style={styles.infoRow}
+          onPress={() => Linking.openURL(`mailto:${email.address}`)}
+        >
           <View style={styles.infoIconContainer}>
             <Mail size={20} color={theme.textMuted} />
           </View>
@@ -55,10 +70,35 @@ export const ProfileContactInfo = ({ contact, config, theme }: ProfileContactInf
                 <Text style={{ color: theme.textMuted }}>({email.label})</Text>
               )}
             </Text>
-            <Text style={[styles.infoValue, { color: theme.text }]}>{email.address}</Text>
+            <Text style={[styles.infoValue, { color: theme.primary }]}>{email.address}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
+
+      {hasAddress && contact.addresses?.map((addr, index) => {
+        const line1 = [addr.number, addr.street].filter(Boolean).join(' ');
+        const line2 = [addr.city, addr.region, addr.country].filter(Boolean).join(', ');
+        return (
+          <TouchableOpacity
+            key={`address-${index}`}
+            style={styles.infoRow}
+            onPress={() => openAddress(addr)}
+          >
+            <View style={styles.infoIconContainer}>
+              <MapPin size={20} color={theme.textMuted} />
+            </View>
+            <View>
+              <Text style={[styles.infoLabel, { color: theme.textMuted }]}>
+                Address {addr.label && addr.label !== 'default' && (
+                  <Text style={{ color: theme.textMuted }}>({addr.label})</Text>
+                )}
+              </Text>
+              {!!line1 && <Text style={[styles.infoValue, { color: theme.primary }]}>{line1}</Text>}
+              {!!line2 && <Text style={[styles.infoValue, { color: theme.primary }]}>{line2}</Text>}
+            </View>
+          </TouchableOpacity>
+        );
+      })}
 
       {contact.identity.birth_date && (
         <View style={styles.infoRow}>

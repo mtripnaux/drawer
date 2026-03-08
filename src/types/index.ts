@@ -22,6 +22,16 @@ export interface PhoneNumber {
   number: number;
 }
 
+export interface Address {
+  label?: string | null;
+  number?: string | null;
+  street?: string | null;
+  city?: string | null;
+  region?: string | null;
+  post_code?: string | null;
+  country?: string | null;
+}
+
 export interface Contact {
   identifier: string;
   identity: {
@@ -46,6 +56,8 @@ export interface Contact {
   };
   phones?: PhoneNumber[] | null;
   emails?: { label?: string | null; address: string }[] | null;
+  address?: Address | null;      // current API — single address
+  addresses?: Address[] | null;  // future API — array
   socials?: { network: string; username: string }[] | null;
   links: Link[] | null;
   groups?: string[] | null;

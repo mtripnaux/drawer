@@ -34,6 +34,7 @@ type Theme = typeof LIGHT_THEME;
 
 interface PhoneItem  { label: string; country_code: string; number: string }
 interface EmailItem  { label: string; address: string }
+interface AddressItem { label: string; number: string; street: string; city: string; region: string; post_code: string; country: string }
 interface SocialItem { network: string; username: string }
 interface LinkItem   { target: string; relation: string; search: string }
 
@@ -94,6 +95,17 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
   );
   const [emails, setEmails] = useState<EmailItem[]>(
     contact?.emails?.map(e => ({ label: e.label ?? '', address: e.address })) ?? []
+  );
+  const [addresses, setAddresses] = useState<AddressItem[]>(
+    contact?.addresses?.map(a => ({
+      label:     a.label     ?? '',
+      number:    a.number    ?? '',
+      street:    a.street    ?? '',
+      city:      a.city      ?? '',
+      region:    a.region    ?? '',
+      post_code: a.post_code ?? '',
+      country:   a.country   ?? '',
+    })) ?? []
   );
   const [socials, setSocials] = useState<SocialItem[]>(
     contact?.socials?.map(s => ({ network: s.network, username: s.username })) ?? []
@@ -161,6 +173,17 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
         : null,
       emails: emails.length > 0
         ? emails.map(e => ({ label: e.label || null, address: e.address }))
+        : null,
+      addresses: addresses.length > 0
+        ? addresses.map(a => ({
+            label:     a.label     || null,
+            number:    a.number    || null,
+            street:    a.street    || null,
+            city:      a.city      || null,
+            region:    a.region    || null,
+            post_code: a.post_code || null,
+            country:   a.country   || null,
+          }))
         : null,
       socials: socials.length > 0
         ? socials
@@ -552,7 +575,54 @@ export const EditContactScreen = ({ contact }: EditContactScreenProps) => {
             </TouchableOpacity>
           </View>
 
-          {/* ── Social networks ── */}
+          {/* ── Addresses ── */}
+          <View style={[styles.section, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Addresses</Text>
+
+            {addresses.map((ad, i) => (
+              <View key={i} style={[styles.entryRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={[styles.entryLeft, { gap: 4 }]}>
+                  {([
+                    { key: 'number',    ph: 'Number',         kb: 'default' },
+                    { key: 'street',    ph: 'Street',         kb: 'default' },
+                    { key: 'city',      ph: 'City',           kb: 'default' },
+                    { key: 'region',    ph: 'Region',         kb: 'default' },
+                    { key: 'post_code', ph: 'Postal code',    kb: 'numeric' },
+                    { key: 'country',   ph: 'Country',        kb: 'default' },
+                  ] as { key: keyof AddressItem; ph: string; kb: string }[]).map(({ key, ph, kb }) => (
+                    <TextInput
+                      key={key}
+                      style={[styles.entryMain, { color: theme.text }]}
+                      value={ad[key]}
+                      onChangeText={v => setAddresses(a => a.map((x, j) => j === i ? { ...x, [key]: v } : x))}
+                      placeholder={ph}
+                      placeholderTextColor={theme.textMuted}
+                      keyboardType={kb as any}
+                      autoCapitalize={key === 'post_code' || key === 'number' ? 'none' : 'words'}
+                    />
+                  ))}
+                  <TextInput
+                    style={[styles.entrySubLabel, { color: theme.textMuted }]}
+                    value={ad.label}
+                    onChangeText={v => setAddresses(a => a.map((x, j) => j === i ? { ...x, label: v } : x))}
+                    placeholder="label"
+                    placeholderTextColor={theme.border}
+                  />
+                </View>
+                <TouchableOpacity onPress={() => setAddresses(a => a.filter((_, j) => j !== i))} style={styles.deleteBtn}>
+                  <X size={16} color={theme.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            <TouchableOpacity
+              style={styles.addRow}
+              onPress={() => setAddresses(a => [...a, { label: 'default', number: '', street: '', city: '', region: '', post_code: '', country: '' }])}
+            >
+              <Plus size={16} color={theme.textMuted} />
+              <Text style={[styles.addLabel, { color: theme.textMuted }]}>Add address</Text>
+            </TouchableOpacity>
+          </View>
           <View style={[styles.section, { borderBottomColor: theme.border }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Social networks</Text>
 

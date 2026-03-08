@@ -1,44 +1,62 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { ContactWithDistance, Group } from '../../types';
 
 type ThemeType = typeof THEME;
 
-const NestedGroups = ({
-  groups,
+const ROW_H = 32;
+const DOT_S = 8;
+const LINE_X = DOT_S / 2 - 0.5; // 3.5 — same as ProfileRelationshipPath
+const ELBOW_W = 20; // width of the L/T connector column
+
+function hasAnyMatch(group: Group, ids: string[]): boolean {
+  if (ids.includes(group.identifier)) return true;
+  return !!group.subgroups?.some(g => hasAnyMatch(g, ids));
+}
+
+const GroupNode = ({
+  group,
   contactGroupIds,
-  level = 0,
+  onGroupPress,
   theme,
 }: {
-  groups: Group[];
+  group: Group;
   contactGroupIds: string[];
-  level?: number;
+  onGroupPress: (groupId: string) => void;
   theme: ThemeType;
 }) => {
-  const isMatch = (group: Group): boolean => {
-    if (contactGroupIds.includes(group.identifier)) return true;
-    return !!group.subgroups?.some(isMatch);
-  };
+  const visibleChildren = (group.subgroups ?? []).filter(g => hasAnyMatch(g, contactGroupIds));
 
   return (
-    <View style={{ marginLeft: level * 16 }}>
-      {groups.map((group) => {
-        if (!isMatch(group)) return null;
+    <View>
+      {/* Row for this node */}
+      <TouchableOpacity style={styles.nodeRow} onPress={() => onGroupPress(group.identifier)}>
+        <View style={[styles.dot, { backgroundColor: theme.primary }]} />
+        {visibleChildren.length > 0 && (
+          <View style={[styles.lineDown, { backgroundColor: theme.border }]} />
+        )}
+        <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
+          {group.name}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Children with L/T connectors */}
+      {visibleChildren.map((child, i) => {
+        const isLast = i === visibleChildren.length - 1;
         return (
-          <View key={group.identifier} style={styles.groupItem}>
-            <View style={styles.groupHeader}>
-              <View style={[styles.bullet, { backgroundColor: theme.primary }]} />
-              <Text style={[styles.groupName, { color: theme.text }]}>{group.name}</Text>
+          <View key={child.identifier} style={styles.childRow}>
+            <View style={styles.connectorCol}>
+              <View style={[
+                styles.connectorVert,
+                { backgroundColor: theme.border },
+                isLast ? styles.connectorVertHalf : styles.connectorVertFull,
+              ]} />
+              <View style={[styles.connectorHoriz, { backgroundColor: theme.border }]} />
             </View>
-            {group.subgroups && (
-              <NestedGroups
-                groups={group.subgroups}
-                contactGroupIds={contactGroupIds}
-                level={level + 1}
-                theme={theme}
-              />
-            )}
+            <View style={{ flex: 1 }}>
+              <GroupNode group={child} contactGroupIds={contactGroupIds} onGroupPress={onGroupPress} theme={theme} />
+            </View>
           </View>
         );
       })}
@@ -49,16 +67,26 @@ const NestedGroups = ({
 interface ProfileGroupsProps {
   contact: ContactWithDistance;
   groups: Group[];
+  onGroupPress: (groupId: string) => void;
   theme: ThemeType;
 }
 
-export const ProfileGroups = ({ contact, groups, theme }: ProfileGroupsProps) => {
+export const ProfileGroups = ({ contact, groups, onGroupPress, theme }: ProfileGroupsProps) => {
   if (!contact.groups || contact.groups.length === 0) return null;
+
+  const rootGroups = groups.filter(g => hasAnyMatch(g, contact.groups!));
+  if (rootGroups.length === 0) return null;
 
   return (
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups and Subgroups</Text>
-      <NestedGroups groups={groups} contactGroupIds={contact.groups} theme={theme} />
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Groups</Text>
+      <View style={styles.treeContainer}>
+        {rootGroups.map((g, i) => (
+          <View key={g.identifier} style={i > 0 ? { marginTop: 8 } : undefined}>
+            <GroupNode group={g} contactGroupIds={contact.groups!} onGroupPress={onGroupPress} theme={theme} />
+          </View>
+        ))}
+      </View>
     </View>
   );
 };
@@ -75,23 +103,61 @@ const styles = StyleSheet.create({
     color: THEME.text,
     marginBottom: 16,
   },
-  groupItem: {
-    marginVertical: 0,
+  treeContainer: {
+    marginLeft: 8,
   },
-  groupHeader: {
+  nodeRow: {
+    height: ROW_H,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    position: 'relative',
   },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: THEME.primary,
-    marginRight: 10,
+  dot: {
+    width: DOT_S,
+    height: DOT_S,
+    borderRadius: DOT_S / 2,
+    marginRight: 12,
+    zIndex: 1,
   },
-  groupName: {
+  // Short downward line below the parent dot, bridging to the first child connector
+  lineDown: {
+    position: 'absolute',
+    left: LINE_X,
+    top: ROW_H / 2 + DOT_S / 2 + 5,       // 5px gap below dot — matches RelationshipPath
+    height: ROW_H / 2 - DOT_S / 2 - 4,    // reaches row boundary
+    width: 1,
+  },
+  label: {
     fontSize: 15,
-    color: THEME.text,
+    fontWeight: '400',
+    flex: 1,
+  },
+  childRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch', // lets connectorCol stretch to child subtree height
+  },
+  connectorCol: {
+    width: ELBOW_W,
+  },
+  connectorVert: {
+    position: 'absolute',
+    left: LINE_X,
+    top: 0,
+    width: 1,
+  },
+  // Last child: L-shape — vertical reaches the horizontal bar exactly (gap only toward the dot)
+  connectorVertHalf: {
+    height: ROW_H / 2,
+  },
+  // Non-last child: T-shape — vertical continues through the whole subtree
+  connectorVertFull: {
+    bottom: 0,
+  },
+  connectorHoriz: {
+    position: 'absolute',
+    left: LINE_X,
+    top: ROW_H / 2 - 0.5,
+    width: ELBOW_W - LINE_X - 4, // 4px gap before child dot
+    height: 1,
   },
 });

@@ -107,9 +107,18 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
-      const base: Contact[] = Array.isArray(data) ? data : (data.contacts || []);
+      const rawBase: Contact[] = Array.isArray(data) ? data : (data.contacts || []);
       const baseGroups: Group[] = Array.isArray(data) ? [] : (data.groups || []);
 
+      // Normalise: if server sends a single `address` object, fold it into `addresses[]`
+      const base: Contact[] = rawBase.map(c => {
+        if (!c.address) return c;
+        const { address, ...rest } = c;
+        return {
+          ...rest,
+          addresses: rest.addresses?.length ? rest.addresses : [address],
+        };
+      });
       rawContactsRef.current = base;
       setGroups(baseGroups);
       computeAndSet(base, centerId);

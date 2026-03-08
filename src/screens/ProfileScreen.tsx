@@ -22,7 +22,7 @@ interface ProfileScreenProps {
 export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
   const { config } = useConfig();
   const { contacts, groups, contactMap, formatName, saving } = useContacts();
-  const { pop, push } = useNavigation();
+  const { pop, push, navigateToGroupFilter } = useNavigation();
 
   const contact = useMemo(
     () => contacts.find(c => c.identifier === contactId),
@@ -120,7 +120,7 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
 
         <ProfileContactInfo contact={contact} config={config} theme={theme} />
 
-        <ProfileGroups contact={contact} groups={groups} theme={theme} />
+        <ProfileGroups contact={contact} groups={groups} onGroupPress={navigateToGroupFilter} theme={theme} />
 
         <ProfileRelationshipPath
           contact={contact}

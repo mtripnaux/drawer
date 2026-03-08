@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Platform, BackHandler } from 'react-native';
 import { Users, Plus, WifiOff } from 'lucide-react-native';
 
 import { useConfig } from '../contexts/ConfigContext';
@@ -17,13 +17,34 @@ import { ContactItem } from '../components/ContactItem';
 export const ContactListScreen = () => {
   const { config } = useConfig();
   const { contacts, groups, loading, refetching, saving, error, formatName, refetch } = useContacts();
-  const { push } = useNavigation();
+  const { push, pendingGroupFilter, clearPendingGroupFilter, stack } = useNavigation();
+  const isAtRoot = stack.length === 1;
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  useEffect(() => {
+    if (pendingGroupFilter) {
+      setActiveTab(pendingGroupFilter);
+      clearPendingGroupFilter();
+    }
+  }, [pendingGroupFilter, clearPendingGroupFilter]);
+
+  // When at root with an active group filter, back should clear the filter first
+  useEffect(() => {
+    if (!isAtRoot) return;
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (activeTab !== 'All') {
+        setActiveTab('All');
+        return true;
+      }
+      return false;
+    });
+    return () => handler.remove();
+  }, [isAtRoot, activeTab]);
 
   const tabs = useMemo(() => {
     const defaultTabs = [

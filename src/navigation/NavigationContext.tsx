@@ -9,12 +9,16 @@ interface NavigationContextType {
   pop: () => void;
   replace: (route: Route) => void;
   resetTo: (route: Route) => void;
+  navigateToGroupFilter: (groupId: string) => void;
+  pendingGroupFilter: string | null;
+  clearPendingGroupFilter: () => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | null>(null);
 
 export const NavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const [stack, setStack] = useState<Route[]>([{ name: 'ContactList' }]);
+  const [pendingGroupFilter, setPendingGroupFilter] = useState<string | null>(null);
 
   const push = useCallback((route: Route) => {
     setStack(prev => [...prev, route]);
@@ -32,6 +36,15 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
     setStack([route]);
   }, []);
 
+  const navigateToGroupFilter = useCallback((groupId: string) => {
+    setPendingGroupFilter(groupId);
+    setStack([{ name: 'ContactList' }]);
+  }, []);
+
+  const clearPendingGroupFilter = useCallback(() => {
+    setPendingGroupFilter(null);
+  }, []);
+
   useEffect(() => {
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (stack.length > 1) {
@@ -44,7 +57,7 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
   }, [stack.length, pop]);
 
   return (
-    <NavigationContext.Provider value={{ currentRoute: stack[stack.length - 1], stack, push, pop, replace, resetTo }}>
+    <NavigationContext.Provider value={{ currentRoute: stack[stack.length - 1], stack, push, pop, replace, resetTo, navigateToGroupFilter, pendingGroupFilter, clearPendingGroupFilter }}>
       {children}
     </NavigationContext.Provider>
   );

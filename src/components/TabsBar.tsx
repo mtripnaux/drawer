@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEME } from '../constants/theme';
@@ -18,17 +18,36 @@ interface TabsBarProps {
 }
 
 export const TabsBar = ({ tabs, activeTab, onSelect, theme }: TabsBarProps) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const layoutsRef = useRef<Record<string, { x: number; width: number }>>({});
+  const containerWidthRef = useRef<number>(0);
+
+  useEffect(() => {
+    const layout = layoutsRef.current[activeTab];
+    if (!layout || !scrollViewRef.current || containerWidthRef.current === 0) return;
+    const targetX = layout.x + layout.width / 2 - containerWidthRef.current / 2;
+    scrollViewRef.current.scrollTo({ x: Math.max(0, targetX), animated: true });
+  }, [activeTab]);
+
   return (
     <View style={styles.wrapper}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         bounces={true}
+        onLayout={(e) => { containerWidthRef.current = e.nativeEvent.layout.width; }}
       >
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
+            onLayout={(e) => {
+              layoutsRef.current[tab.id] = {
+                x: e.nativeEvent.layout.x,
+                width: e.nativeEvent.layout.width,
+              };
+            }}
             style={[
               styles.tab,
               activeTab === tab.id
