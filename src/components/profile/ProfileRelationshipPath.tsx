@@ -29,19 +29,21 @@ export const ProfileRelationshipPath = ({
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Relationship Path</Text>
       <View style={styles.pathContainer}>
-        <TouchableOpacity
-          style={styles.pathStep}
-          onPress={() => {
-            const c = allContacts.find(ac => ac.identifier === config.centerId);
-            if (c) onSelectContact(c);
-          }}
-        >
-          <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+        <View style={styles.pathStep}>
+          <TouchableOpacity
+            style={styles.pathStepTouchable}
+            onPress={() => {
+              const c = allContacts.find(ac => ac.identifier === config.centerId);
+              if (c) onSelectContact(c);
+            }}
+          >
+            <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+            <Text style={[styles.stepText, { color: theme.text }]}>
+              Me <Text style={{ color: theme.textMuted }}>({contactMap.get(config.centerId) || 'Me'})</Text>
+            </Text>
+          </TouchableOpacity>
           {contact.relations.length > 0 && <View style={[styles.stepLine, { backgroundColor: theme.border }]} />}
-          <Text style={[styles.stepText, { color: theme.text }]}>
-            Me <Text style={{ color: theme.textMuted }}>({contactMap.get(config.centerId) || 'Me'})</Text>
-          </Text>
-        </TouchableOpacity>
+        </View>
 
         {contact.relations.length > 0 &&
           contact.relations.map((rel, index) => {
@@ -53,20 +55,21 @@ export const ProfileRelationshipPath = ({
               : null;
 
             return (
-              <TouchableOpacity
-                key={index}
-                style={styles.pathStep}
-                onPress={() => { if (relatedContact) onSelectContact(relatedContact); }}
-                disabled={!relatedContact}
-              >
-                <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+              <View key={index} style={styles.pathStep}>
+                <TouchableOpacity
+                  style={styles.pathStepTouchable}
+                  onPress={() => { if (relatedContact) onSelectContact(relatedContact); }}
+                  disabled={!relatedContact}
+                >
+                  <View style={[styles.stepDot, { backgroundColor: theme.primary }]} />
+                  <Text style={[styles.stepText, { color: theme.text }]}>
+                    {rel} <Text style={{ color: theme.textMuted }}>({name})</Text>
+                  </Text>
+                </TouchableOpacity>
                 {index < contact.relations.length - 1 && (
                   <View style={[styles.stepLine, { backgroundColor: theme.border }]} />
                 )}
-                <Text style={[styles.stepText, { color: theme.text }]}>
-                  {rel} <Text style={{ color: theme.textMuted }}>({name})</Text>
-                </Text>
-              </TouchableOpacity>
+              </View>
             );
           })}
 
@@ -94,6 +97,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   pathStep: {
+    height: 32,
+  },
+  pathStepTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 32,
