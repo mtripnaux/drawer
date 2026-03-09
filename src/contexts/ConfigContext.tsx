@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { defaultUserConfig, UserConfig } from '../constants/config';
 
 const CONFIG_STORAGE_KEY = '@user_config';
@@ -8,7 +9,6 @@ const storageGet = async (key: string): Promise<string | null> => {
   if (Platform.OS === 'web') {
     try { return localStorage.getItem(key); } catch { return null; }
   }
-  const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
   return AsyncStorage.getItem(key);
 };
 
@@ -17,7 +17,6 @@ const storageSet = async (key: string, value: string): Promise<void> => {
     try { localStorage.setItem(key, value); } catch {}
     return;
   }
-  const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
   AsyncStorage.setItem(key, value).catch(() => {});
 };
 
@@ -41,9 +40,11 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
           const parsed = JSON.parse(stored);
           setConfigState({ ...defaultUserConfig, ...parsed });
         }
+        // Set both config and loaded in the same callback so React batches
+        // them into a single render, preventing a spurious double-fetch.
+        setConfigLoaded(true);
       })
-      .catch(() => {})
-      .finally(() => setConfigLoaded(true));
+      .catch(() => setConfigLoaded(true));
   }, []);
 
   const setConfig = useCallback((c: UserConfig) => {

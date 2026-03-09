@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Platform, BackHandler } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Platform, BackHandler, ActivityIndicator } from 'react-native';
 import { Users, Plus, WifiOff } from 'lucide-react-native';
 
 import { useConfig } from '../contexts/ConfigContext';
@@ -105,10 +105,12 @@ export const ContactListScreen = () => {
         overScrollMode="always"
         indicatorStyle={config.darkTheme ? 'white' : 'black'}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Users size={48} color={theme.border} />
-            <Text style={[styles.emptyText, { color: theme.textMuted }]}>No contacts found</Text>
-          </View>
+          loading
+            ? <View style={styles.emptyState}><ActivityIndicator size="large" color={theme.primary} /></View>
+            : <View style={styles.emptyState}>
+                <Users size={48} color={theme.border} />
+                <Text style={[styles.emptyText, { color: theme.textMuted }]}>No contacts found</Text>
+              </View>
         }
       />
       {/* FAB — create new contact */}

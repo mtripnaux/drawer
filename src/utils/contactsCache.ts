@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File, Paths } from 'expo-file-system';
 import { Contact, Group } from '../types';
 
 // Bump this whenever the Contact/Group schema changes to auto-invalidate stale caches.
@@ -12,23 +12,29 @@ interface ContactsCache {
   groups: Group[];
 }
 
-/** Key is scoped per (centerId × baseUri) so switching servers never cross-contaminates. */
-function buildKey(centerId: string, baseUri: string): string {
-  return `contacts_cache::v${CACHE_VERSION}::${centerId}::${baseUri}`;
+/**
+ * Build a File reference scoped to (centerId × baseUri).
+ * Stored in the document directory so the OS never evicts it.
+ */
+function buildFile(centerId: string, baseUri: string): File {
+  const safeKey = `${centerId}_${baseUri}`
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .substring(0, 200);
+  return new File(Paths.document, `contacts_cache_v${CACHE_VERSION}_${safeKey}.json`);
 }
 
 /**
- * Read the persisted contacts cache.
- * Returns `null` if nothing is stored, the data is unreadable, or the version doesn't match.
+ * Read the persisted contacts cache synchronously.
+ * Returns `null` if nothing is stored, the file is unreadable, or the version doesn't match.
  */
-export async function readContactsCache(
+export function readContactsCache(
   centerId: string,
   baseUri: string,
-): Promise<ContactsCache | null> {
+): ContactsCache | null {
   try {
-    const raw = await AsyncStorage.getItem(buildKey(centerId, baseUri));
-    if (!raw) return null;
-    const parsed: ContactsCache = JSON.parse(raw);
+    const file = buildFile(centerId, baseUri);
+    if (!file.exists) return null;
+    const parsed: ContactsCache = JSON.parse(file.textSync());
     if (parsed.version !== CACHE_VERSION) return null;
     return parsed;
   } catch {
@@ -37,15 +43,15 @@ export async function readContactsCache(
 }
 
 /**
- * Persist the contacts + groups to AsyncStorage.
+ * Persist the contacts + groups to the local filesystem synchronously.
  * Failures are swallowed — the cache is best-effort and must never break the app.
  */
-export async function writeContactsCache(
+export function writeContactsCache(
   centerId: string,
   baseUri: string,
   contacts: Contact[],
   groups: Group[],
-): Promise<void> {
+): void {
   try {
     const cache: ContactsCache = {
       version: CACHE_VERSION,
@@ -53,20 +59,24 @@ export async function writeContactsCache(
       contacts,
       groups,
     };
-    await AsyncStorage.setItem(buildKey(centerId, baseUri), JSON.stringify(cache));
+    const file = buildFile(centerId, baseUri);
+    file.create({ intermediates: true, overwrite: true });
+    file.write(JSON.stringify(cache));
   } catch {
     // Silently ignore — storage might be full or unavailable.
   }
 }
 
 /** Remove the cache entry for a given (centerId, baseUri) pair. */
-export async function clearContactsCache(
+export function clearContactsCache(
   centerId: string,
   baseUri: string,
-): Promise<void> {
+): void {
   try {
-    await AsyncStorage.removeItem(buildKey(centerId, baseUri));
+    const file = buildFile(centerId, baseUri);
+    if (file.exists) file.delete();
   } catch {
     // ignore
   }
 }
+

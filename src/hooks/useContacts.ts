@@ -165,8 +165,8 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
     let cancelled = false;
 
     (async () => {
-      const cached = await readContactsCache(centerId, tupper.baseUri);
-      // If this effect was cleaned up while we were reading AsyncStorage, bail out.
+      const cached = readContactsCache(centerId, tupper.baseUri);
+      // If this effect was cleaned up while we were reading the cache, bail out.
       if (cancelled) return;
 
       if (cached && cached.contacts.length > 0) {
