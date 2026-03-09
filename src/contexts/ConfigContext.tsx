@@ -24,12 +24,15 @@ const storageSet = async (key: string, value: string): Promise<void> => {
 interface ConfigContextType {
   config: UserConfig;
   setConfig: (c: UserConfig) => void;
+  /** True once the persisted config has been read from AsyncStorage. */
+  configLoaded: boolean;
 }
 
 const ConfigContext = createContext<ConfigContextType | null>(null);
 
 export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
   const [config, setConfigState] = useState<UserConfig>(defaultUserConfig);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     storageGet(CONFIG_STORAGE_KEY)
@@ -39,7 +42,8 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
           setConfigState({ ...defaultUserConfig, ...parsed });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setConfigLoaded(true));
   }, []);
 
   const setConfig = useCallback((c: UserConfig) => {
@@ -48,7 +52,7 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <ConfigContext.Provider value={{ config, setConfig }}>
+    <ConfigContext.Provider value={{ config, setConfig, configLoaded }}>
       {children}
     </ConfigContext.Provider>
   );

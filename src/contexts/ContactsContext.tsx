@@ -12,6 +12,8 @@ interface ContactsContextType {
   refetching: boolean;
   saving: boolean;
   error: string | null;
+  /** Timestamp (ms) of the last successful network fetch. null = not yet fetched. */
+  lastFetchDate: number | null;
   contactMap: Map<string, string>;
   formatName: (identity: Contact['identity']) => string;
   saveContact: (contact: Contact) => Promise<void>;
@@ -21,10 +23,11 @@ interface ContactsContextType {
 const ContactsContext = createContext<ContactsContextType | null>(null);
 
 export const ContactsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { config } = useConfig();
-  const { contacts, groups, loading, refetching, saving, error, saveContact, refetch } = useContactsLoader(config.centerId, {
+  const { config, configLoaded } = useConfig();
+  const { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch } = useContactsLoader(config.centerId, {
     baseUri: config.tupperBaseUri,
     token: config.secretAccessToken,
+    ready: configLoaded,
   });
 
   const formatName = useCallback(
@@ -39,7 +42,7 @@ export const ContactsProvider = ({ children }: { children: React.ReactNode }) =>
   }, [contacts, formatName]);
 
   return (
-    <ContactsContext.Provider value={{ contacts, groups, loading, refetching, saving, error, contactMap, formatName, saveContact, refetch }}>
+    <ContactsContext.Provider value={{ contacts, groups, loading, refetching, saving, error, lastFetchDate, contactMap, formatName, saveContact, refetch }}>
       {children}
     </ContactsContext.Provider>
   );

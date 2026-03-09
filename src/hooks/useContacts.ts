@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { buildGraph, shortestPath } from '../utils/graph';
 import { ContactWithDistance, Contact, Group, Link, Relation } from '../types';
+import { readContactsCache, writeContactsCache } from '../utils/contactsCache';
 
 // ─── inverse-relation helpers ────────────────────────────────────────────────
 
@@ -51,6 +52,8 @@ function applyInverseLinks(
 interface TupperConfig {
   baseUri: string;
   token: string;
+  /** Must be true before the hook attempts any network or cache operations. */
+  ready: boolean;
 }
 
 export const useContacts = (centerId: string, tupper: TupperConfig) => {
@@ -60,7 +63,11 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   const [refetching, setRefetching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Timestamp (ms) of the last successful network fetch. null = never fetched yet. */
+  const [lastFetchDate, setLastFetchDate] = useState<number | null>(null);
   const rawContactsRef = useRef<Contact[]>([]);
+  /** Mirror of the `groups` state, kept in sync so callbacks can read it without stale closures. */
+  const groupsRef = useRef<Group[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const computeAndSet = useCallback((raw: Contact[], cId: string) => {
@@ -120,13 +127,20 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
         };
       });
       rawContactsRef.current = base;
+      groupsRef.current = baseGroups;
       setGroups(baseGroups);
       computeAndSet(base, centerId);
+      setLastFetchDate(Date.now());
+      // Persist to local cache so the next startup is instant.
+      writeContactsCache(centerId, tupper.baseUri, base, baseGroups);
     } catch (err) {
       // Ignore errors from requests that were intentionally aborted
       if (err instanceof Error && err.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(message);
+      // Don't surface errors from background refreshes — cached data is still displayed.
+      if (!silent) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setError(message);
+      }
     } finally {
       // Skip state updates for requests that were superseded by a newer one
       if (!controller.signal.aborted) {
@@ -136,12 +150,50 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
     }
   }, [centerId, tupper.baseUri, tupper.token, computeAndSet]);
 
-  const fetchFromServer = useCallback(() => doFetch(false), [doFetch]);
   const refetch = useCallback(() => doFetch(true), [doFetch]);
 
+  /**
+   * Keep a ref to the latest doFetch so the initial-load effect can call it
+   * without listing it as a dependency. This prevents the effect from re-running
+   * every time the config (token, etc.) changes while keeping the call up-to-date.
+   */
+  const doFetchRef = useRef(doFetch);
+  useEffect(() => { doFetchRef.current = doFetch; }, [doFetch]);
+
   useEffect(() => {
-    setTimeout(fetchFromServer, 0);
-  }, [fetchFromServer]);
+    if (!tupper.ready) return;
+    let cancelled = false;
+
+    (async () => {
+      const cached = await readContactsCache(centerId, tupper.baseUri);
+      // If this effect was cleaned up while we were reading AsyncStorage, bail out.
+      if (cancelled) return;
+
+      if (cached && cached.contacts.length > 0) {
+        // Show cached data immediately — user sees content with zero network wait.
+        rawContactsRef.current = cached.contacts;
+        groupsRef.current = cached.groups;
+        setGroups(cached.groups);
+        computeAndSet(cached.contacts, centerId);
+        setLoading(false);
+        // Silently refresh in the background.
+        setTimeout(() => { if (!cancelled) doFetchRef.current(true); }, 0);
+      } else {
+        // No cache — normal full loading flow.
+        setTimeout(() => { if (!cancelled) doFetchRef.current(false); }, 0);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      // Abort any in-flight network request so stale responses never update state.
+      abortControllerRef.current?.abort();
+    };
+  // doFetch intentionally excluded: we use doFetchRef so this effect only re-runs
+  // when the actual server endpoint changes (centerId / baseUri), not on every
+  // config change (token, theme, etc.) that would cause a spurious double-fetch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centerId, tupper.baseUri, tupper.ready, computeAndSet]);
 
   const saveContact = useCallback(async (contact: Contact) => {
     setSaving(true);
@@ -210,8 +262,10 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
     setTimeout(() => {
       computeAndSet(updated, centerId);
       setSaving(false);
+      // Keep the local cache up-to-date after every save.
+      writeContactsCache(centerId, tupper.baseUri, updated, groupsRef.current);
     }, 0);
   }, [centerId, tupper.baseUri, tupper.token, computeAndSet]);
 
-  return { contacts, groups, loading, refetching, saving, error, saveContact, refetch };
+  return { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch };
 };
