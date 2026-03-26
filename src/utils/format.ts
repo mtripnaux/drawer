@@ -20,6 +20,8 @@ export const formatNameWithConfig = (identity: Contact['identity'], config: User
 
 export const cleanString = (input: string): string => {
   let output = input.replaceAll("()", '');
+  output = output.replaceAll(" , ", ', ');
+  output = output.replaceAll(" . ", '. ');
   output = output.replaceAll(", ,", ', ');
   output = output.replace(/(?:^|\s+)\.\s*/g, ' ').trim();
   output = output.replace(/\s+/g, ' ').trim();
