@@ -14,18 +14,23 @@ export const formatNameWithConfig = (identity: Contact['identity'], config: User
   name = name.replace(/TITLE/g, identity.title || '');
   name = name.replace(/POST/g, identity.post_nominal || '');
   name = name.replace(/MIDDLE/g, identity.middle_name || '');
-  
-  name = name.replaceAll("()", '');
-  name = name.replaceAll(", ,", ', ');
-  name = name.replace(/(?:^|\s+)\.\s*/g, ' ').trim(); // remove lone dots (e.g. ". John" → "John")
-  name = name.replace(/\s+/g, ' ').trim();
 
-  if(name.endsWith(',')) {
-    name = name.slice(0, -1);
+  return cleanString(name);
+};
+
+export const cleanString = (input: string): string => {
+  let output = input.replaceAll("()", '');
+  output = output.replaceAll(", ,", ', ');
+  output = output.replace(/(?:^|\s+)\.\s*/g, ' ').trim();
+  output = output.replace(/\s+/g, ' ').trim();
+  
+  if(output.endsWith(',')) {
+    output = output.slice(0, -1);
   }
 
-  return name;
-};
+  if(input == output) return output;
+  return cleanString(output);
+}
 
 export const getPhoneNumber = (phone: any): string => {
   if (typeof phone === 'string') return phone;
