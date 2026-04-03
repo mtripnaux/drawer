@@ -4,12 +4,12 @@ export type ProfileActionId = 'phone' | 'message' | 'instagram' | 'facebook' | '
 
 export const defaultUserConfig = {
   centerId: CENTER_ID,
-  tupperBaseUri: "http://217.145.72.68:3058",
+  tupperBaseUri: "http://127.0.0.1:3058",
   secretAccessToken: "super-secret-token",
   nameDisplayPattern: "TITLE FIRST LAST",
   showDeceasedPeople: false,
   hideContactsWithoutPhone: false,
-  sortBy: "PROXIMITY", // "PROXIMITY", "ALPHABETICAL", "RECENTLY_ADDED"
+  sortBy: "PROXIMITY",
   dateFormat: "DD/MM/YYYY",
   darkTheme: false,
   profileActions: [
