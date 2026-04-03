@@ -39,8 +39,8 @@ interface SocialItem { network: string; username: string; label: string }
 interface LinkItem   { target: string; relation: string; search: string }
 
 const RELATION_TYPES: Relation[] = [
-  'Friend', 'Sibling', 'Spouse', 'Partner', 'Parent', 'Child',
-  'Boss', 'Employee', 'Colleague', 'Half-Sibling', 'Ex',
+  'Friend', 'Spouse', 'Partner', 'Parent', 'Child',
+  'Boss', 'Employee', 'Colleague', 'Ex',
 ];
 
 // ─── screen ───────────────────────────────────────────────────────────────────
