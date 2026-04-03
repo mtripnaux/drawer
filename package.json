@@ -1,6 +1,6 @@
 {
   "name": "drawer",
-  "version": "1.0.0",
+  "version": "1.17.2",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
