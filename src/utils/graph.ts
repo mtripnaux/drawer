@@ -6,13 +6,13 @@ export interface GraphEdge {
 }
 
 export const RELATION_WEIGHTS: Record<string, number> = {
-  "Sibling": 0.5,
+  "Sibling": 0.4,
   "Spouse": 0.5,
   "Partner": 0.6,
+  "Child": 0.65,
+  "Parent": 0.65,
   "Friend": 0.7,
   "Half-Sibling": 0.75,
-  "Parent": 0.8,
-  "Child": 0.8,
   "Colleague": 1.5,
   "Boss": 2,
   "Employee": 2,
