@@ -28,6 +28,7 @@ export const ContactsProvider = ({ children }: { children: React.ReactNode }) =>
     baseUri: config.tupperBaseUri,
     token: config.secretAccessToken,
     ready: configLoaded,
+    relationWeights: config.relationWeights,
   });
 
   const formatName = useCallback(

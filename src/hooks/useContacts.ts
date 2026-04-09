@@ -54,6 +54,7 @@ interface TupperConfig {
   token: string;
   /** Must be true before the hook attempts any network or cache operations. */
   ready: boolean;
+  relationWeights?: Record<string, number>;
 }
 
 export const useContacts = (centerId: string, tupper: TupperConfig) => {
@@ -73,7 +74,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
   const computeAndSet = useCallback((raw: Contact[], cId: string) => {
     const graph = buildGraph(raw);
     const computed: ContactWithDistance[] = raw.map((c, index) => {
-      const result = shortestPath(graph, cId, c.identifier);
+      const result = shortestPath(graph, cId, c.identifier, tupper.relationWeights);
       return {
         ...c,
         distance: result ? result.distance : Infinity,
@@ -83,7 +84,7 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
       };
     });
     setContacts(computed);
-  }, []);
+  }, [tupper.relationWeights]);
 
   const doFetch = useCallback(async (silent: boolean) => {
     if (!tupper.baseUri || !tupper.token) return;

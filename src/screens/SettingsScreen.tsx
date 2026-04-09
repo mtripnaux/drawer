@@ -7,6 +7,7 @@ import { LIGHT_THEME, DARK_THEME, THEME } from '../constants/theme';
 import { SettingsGeneralSection } from '../components/settings/SettingsGeneralSection';
 import { SettingsAppearanceSection } from '../components/settings/SettingsAppearanceSection';
 import { SettingsProfileSection } from '../components/settings/SettingsProfileSection';
+import { SettingsRelationshipSection } from '../components/settings/SettingsRelationshipSection';
 
 export const SettingsScreen = () => {
   const { config, setConfig } = useConfig();
@@ -29,11 +30,13 @@ export const SettingsScreen = () => {
 
       <ScrollView>
         <SettingsGeneralSection config={config} onUpdate={setConfig} theme={theme} />
+        <SettingsRelationshipSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsAppearanceSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsProfileSection config={config} onUpdate={setConfig} theme={theme} />
       </ScrollView>
     </View>
   );
+};
 };
 
 const styles = StyleSheet.create({

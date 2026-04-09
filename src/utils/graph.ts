@@ -64,7 +64,12 @@ export function buildGraph(contacts: Contact[]): Map<string, GraphEdge[]> {
   return graph;
 }
 
-export function shortestPath(graph: Map<string, GraphEdge[]>, start: string, end: string): { distance: number, path: string[], relations: string[] } | null {
+export function shortestPath(
+  graph: Map<string, GraphEdge[]>,
+  start: string,
+  end: string,
+  weights: Record<string, number> = RELATION_WEIGHTS
+): { distance: number, path: string[], relations: string[] } | null {
   const dist = new Map<string, number>();
   const prev = new Map<string, { from: string, relation: string }>();
   const visited = new Set<string>();
@@ -107,7 +112,7 @@ export function shortestPath(graph: Map<string, GraphEdge[]>, start: string, end
     visited.add(id);
 
     for (const edge of graph.get(id) || []) {
-      const w = RELATION_WEIGHTS[edge.relation] ?? 1;
+      const w = weights[edge.relation] ?? 1;
       const nd = d + w;
       if (nd < (dist.get(edge.target) ?? Infinity)) {
         dist.set(edge.target, nd);

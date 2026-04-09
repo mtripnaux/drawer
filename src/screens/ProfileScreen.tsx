@@ -7,7 +7,7 @@ import { useNavigation } from '../navigation/NavigationContext';
 import { LIGHT_THEME, DARK_THEME, THEME } from '../constants/theme';
 import { ContactWithDistance } from '../types';
 import { getPhoneNumber } from '../utils/format';
-import { buildGraph, RELATION_WEIGHTS } from '../utils/graph';
+import { buildGraph } from '../utils/graph';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ProfileActions } from '../components/profile/ProfileActions';
 import { ProfileContactInfo } from '../components/profile/ProfileContactInfo';
@@ -69,7 +69,7 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
     const neighborData = neighbors
       .map(edge => {
         const c = contacts.find(nc => nc.identifier === edge.target);
-        return { contact: c, weight: RELATION_WEIGHTS[edge.relation] || 1, relation: edge.relation };
+        return { contact: c, weight: config.relationWeights[edge.relation] || 1, relation: edge.relation };
       })
       .filter(n => !!n.contact) as { contact: ContactWithDistance; weight: number; relation: string }[];
     neighborData.sort((a, b) => a.weight - b.weight);
@@ -82,7 +82,7 @@ export const ProfileScreen = ({ contactId }: ProfileScreenProps) => {
       }
     }
     return unique;
-  }, [contact.identifier, contacts]);
+  }, [contact.identifier, contacts, config.relationWeights]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
