@@ -30,14 +30,12 @@ export const SettingsScreen = () => {
 
       <ScrollView>
         <SettingsGeneralSection config={config} onUpdate={setConfig} theme={theme} />
-        <SettingsRelationshipSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsAppearanceSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsProfileSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsRelationshipSection config={config} onUpdate={setConfig} theme={theme} />
       </ScrollView>
     </View>
   );
-};
 };
 
 const styles = StyleSheet.create({

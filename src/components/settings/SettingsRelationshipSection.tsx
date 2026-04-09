@@ -83,9 +83,8 @@ export const SettingsRelationshipSection = ({ config, onUpdate, theme }: Setting
       group.keys.forEach((key) => groupByKey.set(key, group));
     });
 
-    const orderedItems: Array<{ id: string; label: string; relations: string[]; value: number }> = [];
-    const addedIds = new Set<string>();
-    const coveredRelations = new Set<string>();
+    const items: Array<{ id: string; label: string; relations: string[]; value: number }> = [];
+    const added = new Set<string>();
 
     for (const relation of RELATION_DEFAULT_ORDER) {
       if (!(relation in weights)) continue;
@@ -93,75 +92,38 @@ export const SettingsRelationshipSection = ({ config, onUpdate, theme }: Setting
       const group = groupByKey.get(relation);
       if (group) {
         const id = group.keys.join('|');
-        if (addedIds.has(id)) continue;
-
+        if (added.has(id)) continue;
         const presentKeys = group.keys.filter((key) => key in weights);
         if (presentKeys.length === 0) continue;
 
-        const averageValue =
-          presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
-
-        orderedItems.push({
-          id,
-          label: group.label,
-          relations: presentKeys,
-          value: averageValue,
-        });
-
-        addedIds.add(id);
-        presentKeys.forEach((key) => coveredRelations.add(key));
+        const value = presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
+        items.push({ id, label: group.label, relations: presentKeys, value });
+        added.add(id);
       } else {
-        if (addedIds.has(relation)) continue;
-
-        orderedItems.push({
-          id: relation,
-          label: relation,
-          relations: [relation],
-          value: weights[relation],
-        });
-
-        addedIds.add(relation);
-        coveredRelations.add(relation);
+        if (added.has(relation)) continue;
+        items.push({ id: relation, label: relation, relations: [relation], value: weights[relation] });
+        added.add(relation);
       }
     }
 
     Object.entries(weights).forEach(([relation, value]) => {
-      if (coveredRelations.has(relation)) return;
-
       const group = groupByKey.get(relation);
       if (group) {
         const id = group.keys.join('|');
-        if (addedIds.has(id)) return;
-
+        if (added.has(id)) return;
         const presentKeys = group.keys.filter((key) => key in weights);
         if (presentKeys.length === 0) return;
 
-        const averageValue =
-          presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
-
-        orderedItems.push({
-          id,
-          label: group.label,
-          relations: presentKeys,
-          value: averageValue,
-        });
-
-        addedIds.add(id);
-        presentKeys.forEach((key) => coveredRelations.add(key));
-      } else {
-        orderedItems.push({
-          id: relation,
-          label: relation,
-          relations: [relation],
-          value,
-        });
-
-        addedIds.add(relation);
-        coveredRelations.add(relation);
+        const groupValue = presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
+        items.push({ id, label: group.label, relations: presentKeys, value: groupValue });
+        added.add(id);
+      } else if (!added.has(relation)) {
+        items.push({ id: relation, label: relation, relations: [relation], value });
+        added.add(relation);
       }
     });
 
-    return orderedItems;
+    return items;
   }, [weights]);
 
   return (
