@@ -11,6 +11,7 @@ import { ContactListScreen } from '../screens/ContactListScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { BirthdaysScreen } from '../screens/BirthdaysScreen';
+import { IssuesScreen } from '../screens/IssuesScreen';
 import { EditContactScreen } from '../screens/EditContactScreen';
 import { BottomTabBar } from '../components/BottomTabBar';
 
@@ -30,6 +31,9 @@ export const AppNavigator = () => {
         </View>
         <View style={{ flex: 1, display: currentRoute.name === 'Birthdays' ? 'flex' : 'none' }}>
           <BirthdaysScreen />
+        </View>
+        <View style={{ flex: 1, display: currentRoute.name === 'Issues' ? 'flex' : 'none' }}>
+          <IssuesScreen />
         </View>
 
         {/* Detail screens — conditionally rendered */}

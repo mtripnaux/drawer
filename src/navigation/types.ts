@@ -3,6 +3,7 @@ import { ContactWithDistance } from '../types';
 export type RouteParams = {
   ContactList: undefined;
   Birthdays: undefined;
+  Issues: undefined;
   Profile: { contactId: string };
   Settings: undefined;
   EditContact: { contact?: ContactWithDistance };

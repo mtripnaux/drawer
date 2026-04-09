@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Users, Balloon } from 'lucide-react-native';
+import { Users, Balloon, AlertTriangle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '../constants/theme';
 import { useNavigation } from '../navigation/NavigationContext';
@@ -14,6 +14,7 @@ interface BottomTabBarProps {
 const TABS = [
   { name: 'ContactList' as const, label: 'Contacts', Icon: Users },
   { name: 'Birthdays' as const, label: 'Birthdays', Icon: Balloon },
+  { name: 'Issues' as const, label: 'Issues', Icon: AlertTriangle },
 ];
 
 export const BottomTabBar = ({ theme }: BottomTabBarProps) => {
