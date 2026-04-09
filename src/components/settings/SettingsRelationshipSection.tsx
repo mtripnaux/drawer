@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
-import { RotateCcw } from 'lucide-react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import Slider from '@react-native-community/slider';
+import { RotateCcw, Link2, Gem, Heart, Handshake, BriefcaseBusiness, Baby, Users, Smile, HeartCrack } from 'lucide-react-native';
 import { THEME } from '../../constants/theme';
 import { UserConfig, DEFAULT_RELATION_WEIGHTS } from '../../constants/config';
 
@@ -12,102 +13,202 @@ interface SettingsRelationshipSectionProps {
   theme: ThemeType;
 }
 
+const SYMMETRIC_RELATION_GROUPS: Array<{ label: string; keys: string[] }> = [
+  { label: 'Hierarchical', keys: ['Boss', 'Employee'] },
+  { label: 'Parent / Child', keys: ['Parent', 'Child'] },
+];
+const RELATION_DEFAULT_ORDER = Object.keys(DEFAULT_RELATION_WEIGHTS);
+
+const getRelationIcon = (label: string): React.ComponentType<{ size: number; color: string }> => {
+  switch (label) {
+    case 'Spouse':
+      return Gem;
+    case 'Partner':
+      return Heart;
+    case 'Colleague':
+      return Handshake;
+    case 'Hierarchical':
+      return BriefcaseBusiness;
+    case 'Parent / Child':
+      return Baby;
+    case 'Sibling':
+    case 'Half-Sibling':
+      return Users;
+    case 'Friend':
+      return Smile;
+    case 'Ex':
+      return HeartCrack;
+    default:
+      return Link2;
+  }
+};
+
 export const SettingsRelationshipSection = ({ config, onUpdate, theme }: SettingsRelationshipSectionProps) => {
-  const [weights, setWeights] = useState<Record<string, string>>(
-    Object.entries(config.relationWeights).reduce((acc, [key, val]) => {
-      acc[key] = val.toString();
-      return acc;
-    }, {} as Record<string, string>)
-  );
+  const [weights, setWeights] = useState<Record<string, number>>({ ...config.relationWeights });
 
   useEffect(() => {
-    // Sync weights from config
-    setWeights(
-      Object.entries(config.relationWeights).reduce((acc, [key, val]) => {
-        acc[key] = val.toString();
-        return acc;
-      }, {} as Record<string, string>)
-    );
+    setWeights({ ...config.relationWeights });
   }, [config.relationWeights]);
 
-  const handleWeightChange = (relation: string, value: string) => {
-    setWeights(prev => ({ ...prev, [relation]: value }));
+  const handleWeightChange = (relations: string[], value: number) => {
+    setWeights(prev => {
+      const next = { ...prev };
+      relations.forEach((relation) => {
+        if (relation in next) {
+          next[relation] = value;
+        }
+      });
+      return next;
+    });
   };
 
-  const handleWeightBlur = (relation: string) => {
-    const value = parseFloat(weights[relation]);
-    if (!isNaN(value) && value >= 0) {
-      const newWeights = { ...config.relationWeights, [relation]: value };
-      onUpdate({ ...config, relationWeights: newWeights });
-    } else {
-      // Reset to previous value on invalid input
-      setWeights(prev => ({
-        ...prev,
-        [relation]: config.relationWeights[relation].toString(),
-      }));
-    }
+  const handleWeightCommit = (relations: string[], value: number) => {
+    const newWeights = { ...config.relationWeights };
+    relations.forEach((relation) => {
+      if (relation in newWeights) {
+        newWeights[relation] = value;
+      }
+    });
+    onUpdate({ ...config, relationWeights: newWeights });
   };
 
   const handleResetAll = () => {
-    setWeights(
-      Object.entries(DEFAULT_RELATION_WEIGHTS).reduce((acc, [key, val]) => {
-        acc[key] = val.toString();
-        return acc;
-      }, {} as Record<string, string>)
-    );
+    setWeights({ ...DEFAULT_RELATION_WEIGHTS });
     onUpdate({ ...config, relationWeights: { ...DEFAULT_RELATION_WEIGHTS } });
   };
 
-  // Sort relations by weight for better UX
-  const sortedRelations = Object.entries(weights).sort(
-    ([, a], [, b]) => parseFloat(a) - parseFloat(b)
-  );
+  const displayedRelations = useMemo(() => {
+    const groupByKey = new Map<string, { label: string; keys: string[] }>();
+    SYMMETRIC_RELATION_GROUPS.forEach((group) => {
+      group.keys.forEach((key) => groupByKey.set(key, group));
+    });
+
+    const orderedItems: Array<{ id: string; label: string; relations: string[]; value: number }> = [];
+    const addedIds = new Set<string>();
+    const coveredRelations = new Set<string>();
+
+    for (const relation of RELATION_DEFAULT_ORDER) {
+      if (!(relation in weights)) continue;
+
+      const group = groupByKey.get(relation);
+      if (group) {
+        const id = group.keys.join('|');
+        if (addedIds.has(id)) continue;
+
+        const presentKeys = group.keys.filter((key) => key in weights);
+        if (presentKeys.length === 0) continue;
+
+        const averageValue =
+          presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
+
+        orderedItems.push({
+          id,
+          label: group.label,
+          relations: presentKeys,
+          value: averageValue,
+        });
+
+        addedIds.add(id);
+        presentKeys.forEach((key) => coveredRelations.add(key));
+      } else {
+        if (addedIds.has(relation)) continue;
+
+        orderedItems.push({
+          id: relation,
+          label: relation,
+          relations: [relation],
+          value: weights[relation],
+        });
+
+        addedIds.add(relation);
+        coveredRelations.add(relation);
+      }
+    }
+
+    Object.entries(weights).forEach(([relation, value]) => {
+      if (coveredRelations.has(relation)) return;
+
+      const group = groupByKey.get(relation);
+      if (group) {
+        const id = group.keys.join('|');
+        if (addedIds.has(id)) return;
+
+        const presentKeys = group.keys.filter((key) => key in weights);
+        if (presentKeys.length === 0) return;
+
+        const averageValue =
+          presentKeys.reduce((sum, key) => sum + weights[key], 0) / presentKeys.length;
+
+        orderedItems.push({
+          id,
+          label: group.label,
+          relations: presentKeys,
+          value: averageValue,
+        });
+
+        addedIds.add(id);
+        presentKeys.forEach((key) => coveredRelations.add(key));
+      } else {
+        orderedItems.push({
+          id: relation,
+          label: relation,
+          relations: [relation],
+          value,
+        });
+
+        addedIds.add(relation);
+        coveredRelations.add(relation);
+      }
+    });
+
+    return orderedItems;
+  }, [weights]);
 
   return (
     <View style={[styles.section, { borderBottomColor: theme.border }]}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Relationship Distances</Text>
-        <TouchableOpacity
-          onPress={handleResetAll}
-          style={[styles.resetButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
-        >
-          <RotateCcw size={16} color={theme.text} />
-        </TouchableOpacity>
-      </View>
-      <Text style={[styles.subtitle, { color: theme.textMuted, marginBottom: 16 }]}>
-        Lower values = closer relationships. Adjust to customize proximity calculations.
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Relationship Distances</Text>
+      <Text style={[styles.hint, { color: theme.textMuted }]}>
+        Select proximity values for each relation type
       </Text>
 
       <ScrollView scrollEnabled={false}>
-        {sortedRelations.map(([relation, value]) => (
-          <View key={relation} style={styles.inputRow}>
-            <View style={styles.labelContainer}>
-              <Text style={[styles.label, { color: theme.text }]}>{relation}</Text>
-              <Text style={[styles.hint, { color: theme.textMuted }]}>
-                {parseFloat(value) < 1
-                  ? 'Very Close'
-                  : parseFloat(value) < 1.5
-                  ? 'Close'
-                  : parseFloat(value) < 2.5
-                  ? 'Moderate'
-                  : 'Distant'}
-              </Text>
-            </View>
-            <TextInput
+        {displayedRelations.map((item, index) => {
+          const RelationIcon = getRelationIcon(item.label);
+
+          return (
+            <View
+              key={item.id}
               style={[
-                styles.numberInput,
-                { borderColor: theme.border, color: theme.text, backgroundColor: theme.surface },
+                styles.row,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+                index === displayedRelations.length - 1 && styles.rowLast,
               ]}
-              value={value}
-              onChangeText={(text) => handleWeightChange(relation, text)}
-              onBlur={() => handleWeightBlur(relation)}
-              placeholder="0.0"
-              placeholderTextColor={theme.textMuted}
-              keyboardType="decimal-pad"
-              maxLength={5}
-            />
-          </View>
-        ))}
+            >
+              <View style={[styles.iconWrap, { backgroundColor: theme.primary + '18' }]}>
+                <RelationIcon size={18} color={theme.primary} />
+              </View>
+
+              <View style={styles.labelWrap}>
+                <Text style={[styles.label, { color: theme.text }]}>{item.label}</Text>
+              </View>
+
+              <View style={styles.sliderWrap}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={0}
+                  maximumValue={3}
+                  step={0.05}
+                  minimumTrackTintColor={theme.text}
+                  maximumTrackTintColor={theme.border}
+                  thumbTintColor={theme.text}
+                  value={Math.min(3, item.value)}
+                  onValueChange={(newValue) => handleWeightChange(item.relations, newValue)}
+                  onSlidingComplete={(newValue) => handleWeightCommit(item.relations, newValue)}
+                />
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -129,6 +230,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: THEME.text,
+    marginBottom: 6,
+  },
+  hint: {
+    fontSize: 13,
+    color: THEME.textMuted,
+    marginBottom: 16,
   },
   resetButton: {
     width: 40,
@@ -140,48 +247,42 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.surface,
     borderColor: THEME.border,
   },
-  subtitle: {
-    fontSize: 13,
-    color: THEME.textMuted,
-    lineHeight: 18,
-  },
-  inputRow: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: THEME.border,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 8,
   },
-  labelContainer: {
+  rowLast: {
+    marginBottom: 0,
+  },
+  iconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelWrap: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: THEME.text,
-    marginBottom: 4,
   },
-  hint: {
-    fontSize: 12,
-    color: THEME.textMuted,
+  sliderWrap: {
+    width: 130,
   },
-  numberInput: {
-    width: 70,
+  slider: {
+    width: '100%',
     height: 40,
-    borderWidth: 1,
-    borderColor: THEME.border,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    fontSize: 14,
-    color: THEME.text,
-    backgroundColor: THEME.surface,
-    textAlign: 'center',
-    marginLeft: 12,
-    ...Platform.select({
-      web: { outlineStyle: 'none' },
-      default: {},
-    }) as any,
   },
 });
