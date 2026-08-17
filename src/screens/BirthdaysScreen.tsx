@@ -10,12 +10,17 @@ import { getInitials } from '../utils/format';
 import { Animated } from 'react-native';
 import { useSpinAnimation } from '../hooks/useSpinAnimation';
 
-const daysUntilNextBirthday = (month: number, day: number): number => {
+// Birthdays that passed less than 3 months ago are shown as "ago"; older ones
+// wrap forward to their next occurrence and are shown as upcoming.
+const getBirthdayInfo = (month: number, day: number): { daysUntil: number; bdayYear: number } => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const bday = new Date(today.getFullYear(), month - 1, day);
-  if (bday < today) bday.setFullYear(today.getFullYear() + 1);
-  return Math.round((bday.getTime() - today.getTime()) / 86400000);
+  const threshold = new Date(today);
+  threshold.setMonth(threshold.getMonth() - 3);
+  if (bday < threshold) bday.setFullYear(today.getFullYear() + 1);
+  const daysUntil = Math.round((bday.getTime() - today.getTime()) / 86400000);
+  return { daysUntil, bdayYear: bday.getFullYear() };
 };
 
 const MONTH_NAMES = [
@@ -51,11 +56,8 @@ export const BirthdaysScreen = () => {
       .filter(c => c.identity.birth_date?.month && c.identity.birth_date?.day)
       .map(c => {
         const { month, day, year } = c.identity.birth_date!;
-        const daysUntil = daysUntilNextBirthday(month!, day!);
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const bdayThisYear = new Date(today.getFullYear(), month! - 1, day!);
-        const nextBdayYear = bdayThisYear < today ? today.getFullYear() + 1 : today.getFullYear();
-        const turnsAge = year ? nextBdayYear - year : null;
+        const { daysUntil, bdayYear } = getBirthdayInfo(month!, day!);
+        const turnsAge = year ? bdayYear - year : null;
         return { ...c, daysUntil, turnsAge };
       })
       .sort((a, b) => sortOrder === 'asc' ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
@@ -69,7 +71,11 @@ export const BirthdaysScreen = () => {
       ? '🎉 Today!'
       : item.daysUntil === 1
       ? 'Tomorrow'
-      : `In ${item.daysUntil} days`;
+      : item.daysUntil === -1
+      ? 'Yesterday'
+      : item.daysUntil > 1
+      ? `In ${item.daysUntil} days`
+      : `${Math.abs(item.daysUntil)} days ago`;
 
     return (
       <View style={styles.itemContainer}>
@@ -121,7 +127,7 @@ export const BirthdaysScreen = () => {
         <View>
           <Text style={[styles.title, { color: theme.text }]}>Birthdays</Text>
           <Text style={[styles.subtitle, { color: theme.textMuted }]}>
-            {birthdayContacts.length} upcoming
+            {birthdayContacts.length} birthdays
           </Text>
         </View>
         <View style={styles.headerActions}>
