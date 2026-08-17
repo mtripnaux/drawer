@@ -47,6 +47,7 @@ export const BirthdaysScreen = () => {
 
   const birthdayContacts = useMemo<BirthdayContact[]>(() => {
     return contacts
+      .filter(c => config.showDeceasedPeople || c.identity.is_alive !== false)
       .filter(c => c.identity.birth_date?.month && c.identity.birth_date?.day)
       .map(c => {
         const { month, day, year } = c.identity.birth_date!;
@@ -58,7 +59,7 @@ export const BirthdaysScreen = () => {
         return { ...c, daysUntil, turnsAge };
       })
       .sort((a, b) => sortOrder === 'asc' ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
-  }, [contacts, sortOrder]);
+  }, [contacts, sortOrder, config.showDeceasedPeople]);
 
   const renderItem = ({ item }: { item: BirthdayContact }) => {
     const colors = getGenderColors(item.identity.gender, theme);
