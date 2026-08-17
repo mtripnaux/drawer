@@ -10,6 +10,7 @@ import { LIGHT_THEME, DARK_THEME } from '../constants/theme';
 import { ContactListScreen } from '../screens/ContactListScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { GroupsScreen } from '../screens/GroupsScreen';
 import { BirthdaysScreen } from '../screens/BirthdaysScreen';
 import { IssuesScreen } from '../screens/IssuesScreen';
 import { EditContactScreen } from '../screens/EditContactScreen';
@@ -41,6 +42,7 @@ export const AppNavigator = () => {
           <ProfileScreen contactId={currentRoute.params.contactId} />
         )}
         {currentRoute.name === 'Settings' && <SettingsScreen />}
+        {currentRoute.name === 'Groups' && <GroupsScreen />}
         {currentRoute.name === 'EditContact' && (
           <EditContactScreen contact={currentRoute.params.contact} />
         )}

@@ -6,6 +6,7 @@ export type RouteParams = {
   Issues: undefined;
   Profile: { contactId: string };
   Settings: undefined;
+  Groups: undefined;
   EditContact: { contact?: ContactWithDistance };
 };
 

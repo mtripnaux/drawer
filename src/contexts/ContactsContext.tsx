@@ -18,13 +18,15 @@ interface ContactsContextType {
   formatName: (identity: Contact['identity']) => string;
   saveContact: (contact: Contact) => Promise<void>;
   refetch: () => Promise<void>;
+  createGroup: (name: string, parent?: string) => Promise<string>;
+  deleteGroup: (id: string) => Promise<void>;
 }
 
 const ContactsContext = createContext<ContactsContextType | null>(null);
 
 export const ContactsProvider = ({ children }: { children: React.ReactNode }) => {
   const { config, configLoaded } = useConfig();
-  const { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch } = useContactsLoader(config.centerId, {
+  const { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch, createGroup, deleteGroup } = useContactsLoader(config.centerId, {
     baseUri: config.tupperBaseUri,
     token: config.secretAccessToken,
     ready: configLoaded,
@@ -43,7 +45,7 @@ export const ContactsProvider = ({ children }: { children: React.ReactNode }) =>
   }, [contacts, formatName]);
 
   return (
-    <ContactsContext.Provider value={{ contacts, groups, loading, refetching, saving, error, lastFetchDate, contactMap, formatName, saveContact, refetch }}>
+    <ContactsContext.Provider value={{ contacts, groups, loading, refetching, saving, error, lastFetchDate, contactMap, formatName, saveContact, refetch, createGroup, deleteGroup }}>
       {children}
     </ContactsContext.Provider>
   );

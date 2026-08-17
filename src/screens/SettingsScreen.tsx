@@ -8,10 +8,11 @@ import { SettingsGeneralSection } from '../components/settings/SettingsGeneralSe
 import { SettingsAppearanceSection } from '../components/settings/SettingsAppearanceSection';
 import { SettingsProfileSection } from '../components/settings/SettingsProfileSection';
 import { SettingsRelationshipSection } from '../components/settings/SettingsRelationshipSection';
+import { SettingsGroupsSection } from '../components/settings/SettingsGroupsSection';
 
 export const SettingsScreen = () => {
   const { config, setConfig } = useConfig();
-  const { pop } = useNavigation();
+  const { pop, push } = useNavigation();
 
   const theme = useMemo(() => (config.darkTheme ? DARK_THEME : LIGHT_THEME), [config.darkTheme]);
 
@@ -33,6 +34,7 @@ export const SettingsScreen = () => {
         <SettingsAppearanceSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsProfileSection config={config} onUpdate={setConfig} theme={theme} />
         <SettingsRelationshipSection config={config} onUpdate={setConfig} theme={theme} />
+        <SettingsGroupsSection onPress={() => push({ name: 'Groups' })} theme={theme} />
       </ScrollView>
     </View>
   );

@@ -268,5 +268,42 @@ export const useContacts = (centerId: string, tupper: TupperConfig) => {
     }, 0);
   }, [centerId, tupper.baseUri, tupper.token, computeAndSet]);
 
-  return { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch };
+  const createGroup = useCallback(async (name: string, parent?: string): Promise<string> => {
+    const response = await fetch(`${tupper.baseUri}/groups`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tupper.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(parent ? { name, parent } : { name }),
+    });
+
+    const responseText = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText} — ${responseText}`);
+    }
+
+    // Server is the source of truth for where the new group lands in the tree.
+    await doFetch(true);
+    return JSON.parse(responseText) as string;
+  }, [tupper.baseUri, tupper.token, doFetch]);
+
+  const deleteGroup = useCallback(async (id: string): Promise<void> => {
+    const response = await fetch(`${tupper.baseUri}/groups/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${tupper.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      throw new Error(`HTTP ${response.status} ${response.statusText} — ${responseText}`);
+    }
+
+    await doFetch(true);
+  }, [tupper.baseUri, tupper.token, doFetch]);
+
+  return { contacts, groups, loading, refetching, saving, error, lastFetchDate, saveContact, refetch, createGroup, deleteGroup };
 };

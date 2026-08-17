@@ -60,7 +60,13 @@ export const BirthdaysScreen = () => {
         const turnsAge = year ? bdayYear - year : null;
         return { ...c, daysUntil, turnsAge };
       })
-      .sort((a, b) => sortOrder === 'asc' ? a.daysUntil - b.daysUntil : b.daysUntil - a.daysUntil);
+      .sort((a, b) => {
+        // Push recently-passed birthdays (negative daysUntil) after all upcoming ones,
+        // so the list always leads with the next birthday to come.
+        const rankA = a.daysUntil < 0 ? a.daysUntil + 1000 : a.daysUntil;
+        const rankB = b.daysUntil < 0 ? b.daysUntil + 1000 : b.daysUntil;
+        return sortOrder === 'asc' ? rankA - rankB : rankB - rankA;
+      });
   }, [contacts, sortOrder, config.showDeceasedPeople]);
 
   const renderItem = ({ item }: { item: BirthdayContact }) => {
